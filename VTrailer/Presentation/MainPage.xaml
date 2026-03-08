@@ -1,0 +1,110 @@
+﻿<Page x:Class="VTrailer.Presentation.MainPage"
+      x:Name="RootPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:local="using:VTrailer.Presentation"
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+      xmlns:utu="using:Uno.Toolkit.UI"
+      xmlns:um="using:Uno.Material"
+      mc:Ignorable="d"
+      Background="{ThemeResource BackgroundBrush}">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <utu:NavigationBar Grid.Row="0" Content="VTrailer" 
+                           Background="#0078D7" Foreground="White"
+                           Style="{StaticResource MaterialNavigationBarStyle}">
+
+            <utu:NavigationBar.PrimaryCommands>
+
+                <AppBarElementContainer VerticalAlignment="Center" Margin="0,0,16,0">
+                    <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                        <FontIcon Glyph="&#xE706;" FontSize="14" Foreground="White" Opacity="0.8" />
+                        <ToggleSwitch IsOn="{Binding IsDarkMode, Mode=TwoWay}" 
+                                      MinWidth="0" Margin="0,4,0,0" 
+                                      OnContent="" OffContent=""/>
+                        <FontIcon Glyph="&#xE708;" FontSize="14" Foreground="White" Opacity="0.8" />
+                    </StackPanel>
+                </AppBarElementContainer>
+
+                <AppBarButton Foreground="White">
+                    <AppBarButton.Icon>
+                        <FontIcon Glyph="&#xE77B;" />
+                    </AppBarButton.Icon>
+
+                    <AppBarButton.Flyout>
+                        <MenuFlyout>
+                            <MenuFlyoutItem Text="Fiók beállítások" Command="{Binding DataContext.GoToProfileCommand, ElementName=RootPage}">
+                                <MenuFlyoutItem.Icon>
+                                    <FontIcon Glyph="&#xE713;" />
+                                </MenuFlyoutItem.Icon>
+                            </MenuFlyoutItem>
+
+                            <MenuFlyoutSeparator />
+
+                            <MenuFlyoutItem Text="Kijelentkezés" Command="{Binding LogoutCommand}">
+                                <MenuFlyoutItem.Icon>
+                                    <FontIcon Glyph="&#xE7E8;" Foreground="Red"/>
+                                </MenuFlyoutItem.Icon>
+                            </MenuFlyoutItem>
+                        </MenuFlyout>
+                    </AppBarButton.Flyout>
+                </AppBarButton>
+
+            </utu:NavigationBar.PrimaryCommands>
+        </utu:NavigationBar>
+
+        <Grid Grid.Row="1" Margin="16" MaxWidth="1200">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <Grid Grid.Row="0" Padding="10,12" Background="{ThemeResource SurfaceContainerHighestBrush}" 
+                  CornerRadius="4,4,0,0" BorderBrush="{ThemeResource OutlineBrush}" BorderThickness="1,1,1,1">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="2*" />
+                    <ColumnDefinition Width="2*" />
+                    <ColumnDefinition Width="3*" />
+                    <ColumnDefinition Width="1*" />
+                    <ColumnDefinition Width="2*" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Grid.Column="0" Text="Rendszám" FontWeight="Bold" VerticalAlignment="Center" />
+                <TextBlock Grid.Column="1" Text="Kategória" FontWeight="Bold" VerticalAlignment="Center" />
+                <TextBlock Grid.Column="2" Text="Típus" FontWeight="Bold" VerticalAlignment="Center" />
+                <TextBlock Grid.Column="3" Text="Ár/Nap" FontWeight="Bold" VerticalAlignment="Center" />
+                <TextBlock Grid.Column="4" Text="Státusz" FontWeight="Bold" VerticalAlignment="Center" />
+            </Grid>
+
+            <ListView Grid.Row="1" ItemsSource="{Binding Trailers}" SelectionMode="None" 
+                      BorderBrush="{ThemeResource OutlineBrush}" BorderThickness="1,0,1,1" CornerRadius="0,0,4,4">
+                <ListView.ItemTemplate>
+                    <DataTemplate>
+                        <Grid Padding="10,12" BorderBrush="{ThemeResource SurfaceVariantBrush}" BorderThickness="0,0,0,1">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="2*" />
+                                <ColumnDefinition Width="2*" />
+                                <ColumnDefinition Width="3*" />
+                                <ColumnDefinition Width="1*" />
+                                <ColumnDefinition Width="2*" />
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="{Binding LicensePlate}" VerticalAlignment="Center" />
+                            <TextBlock Grid.Column="1" Text="{Binding Category}" VerticalAlignment="Center" />
+                            <TextBlock Grid.Column="2" Text="{Binding BrandAndModel}" VerticalAlignment="Center" />
+                            <TextBlock Grid.Column="3" VerticalAlignment="Center">
+                                <Run Text="{Binding DailyRateFt}" />
+                                <Run Text="Ft" />
+                            </TextBlock>
+                            <TextBlock Grid.Column="4" Text="{Binding Status}" VerticalAlignment="Center" />
+                        </Grid>
+                    </DataTemplate>
+                </ListView.ItemTemplate>
+            </ListView>
+        </Grid>
+    </Grid>
+</Page>

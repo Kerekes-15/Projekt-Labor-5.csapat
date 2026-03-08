@@ -1,0 +1,60 @@
+﻿<Page x:Class="VTrailer.Presentation.ProfilePage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:local="using:VTrailer.Presentation"
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+      xmlns:utu="using:Uno.Toolkit.UI"
+      mc:Ignorable="d"
+      Background="{ThemeResource BackgroundBrush}">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <utu:NavigationBar Grid.Row="0" Content="Fiók beállítások" Background="#0078D7" Foreground="White" Style="{StaticResource MaterialNavigationBarStyle}">
+            <utu:NavigationBar.MainCommand>
+                <AppBarButton Command="{Binding GoBackCommand}" Foreground="White">
+                    <AppBarButton.Icon>
+                        <FontIcon Glyph="&#xE72B;" />
+                    </AppBarButton.Icon>
+                </AppBarButton>
+            </utu:NavigationBar.MainCommand>
+        </utu:NavigationBar>
+
+        <StackPanel Grid.Row="1" Margin="32" Spacing="24" MaxWidth="500" HorizontalAlignment="Left">
+
+            <FontIcon Glyph="&#xE77B;" FontSize="80" HorizontalAlignment="Left" Margin="0,0,0,10"/>
+
+            <TextBlock Text="Személyes adatok" FontSize="24" FontWeight="Bold" Margin="0,0,0,10" />
+
+            <StackPanel Spacing="4">
+                <TextBlock Text="Teljes név" FontSize="14" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                <TextBlock Text="{Binding CurrentUser.FullName}" FontSize="18" FontWeight="SemiBold" />
+            </StackPanel>
+
+            <StackPanel Spacing="4">
+                <TextBlock Text="Felhasználónév" FontSize="14" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                <TextBlock Text="{Binding CurrentUser.Username}" FontSize="18" FontWeight="SemiBold" />
+            </StackPanel>
+
+            <StackPanel Spacing="4">
+                <TextBlock Text="E-mail cím" FontSize="14" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                <TextBlock Text="{Binding CurrentUser.Email}" FontSize="18" FontWeight="SemiBold" />
+            </StackPanel>
+
+            <StackPanel Spacing="4">
+                <TextBlock Text="Telefonszám" FontSize="14" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                <TextBlock Text="{Binding CurrentUser.PhoneNumber}" FontSize="18" FontWeight="SemiBold" />
+            </StackPanel>
+
+            <StackPanel Spacing="4">
+                <TextBlock Text="Jogosultság" FontSize="14" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                <TextBlock Text="{Binding CurrentUser.Role}" FontSize="18" FontWeight="SemiBold" />
+            </StackPanel>
+
+        </StackPanel>
+    </Grid>
+</Page>

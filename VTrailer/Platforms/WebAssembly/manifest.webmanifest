@@ -1,0 +1,10 @@
+{
+  "background_color": "#ffffff",
+  "description": "VTrailer",
+  "display": "standalone",
+  "name": "VTrailer",
+  "short_name": "VTrailer",
+  "start_url": "/index.html",
+  "theme_color": "#ffffff",
+  "scope": "/"
+}
