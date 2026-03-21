@@ -1,7 +1,6 @@
-using System.Windows.Input;
+using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.Input;
 using Uno.Extensions.Navigation;
-using System.Threading.Tasks;
 
 namespace VTrailer.Presentation;
 
@@ -15,7 +14,7 @@ public class IntroViewModel : ObservableObject
         GoToLoginCommand = new AsyncRelayCommand(GoToLoginAsync);
     }
 
-    public ICommand GoToLoginCommand { get; }
+    public IAsyncRelayCommand GoToLoginCommand { get; }
 
     private async Task GoToLoginAsync()
     {

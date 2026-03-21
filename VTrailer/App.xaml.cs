@@ -135,7 +135,7 @@ public partial class App : Application
                 }
                 else
                 {
-                    await navigator.NavigateViewModelAsync<LoginViewModel>(this, qualifier: Qualifiers.Nested);
+                    await navigator.NavigateViewModelAsync<IntroViewModel>(this, qualifier: Qualifiers.Nested);
                 }
             });
     }
@@ -155,7 +155,7 @@ public partial class App : Application
             new RouteMap("", View: views.FindByViewModel<ShellViewModel>(),
                 Nested:
                 [
-                    new ("Intro", View: views.FindByView<IntroViewModel>(), IsDefault:true),
+                    new ("Intro", View: views.FindByViewModel<IntroViewModel>(), IsDefault:true),
                     new ("Login", View: views.FindByViewModel<LoginViewModel>()),
                     new ("Main", View: views.FindByViewModel<MainViewModel>()),
                     new ("Second", View: views.FindByViewModel<SecondViewModel>()),

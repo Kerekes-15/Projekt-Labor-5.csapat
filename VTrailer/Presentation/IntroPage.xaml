@@ -1,15 +1,43 @@
-﻿<Page x:Class="VTrailer.Presentation.IntroPage"
+<Page x:Class="VTrailer.Presentation.IntroPage"
+      x:Name="RootPage"
       xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       xmlns:local="using:VTrailer.Presentation"
       Background="{ThemeResource BackgroundBrush}">
 
-    <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" Spacing="24">
-        <TextBlock Text="Welcome to VTrailer!" FontSize="32" FontWeight="Bold" />
-        <TextBlock Text="This is some placeholder intro text." FontSize="18" />
-        <Button Content="Login"
-                Width="160"
-                Height="48"
-                Click="LoginButton_Click"/>
-    </StackPanel>
+    <Grid Padding="32">
+        <Border MaxWidth="560"
+                Padding="36"
+                CornerRadius="20"
+                Background="{ThemeResource SurfaceBrush}"
+                BorderBrush="{ThemeResource SurfaceVariantBrush}"
+                BorderThickness="1"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center">
+            <StackPanel Spacing="20">
+                <TextBlock Text="Welcome to VTrailer"
+                           FontSize="34"
+                           FontWeight="SemiBold"
+                           TextAlignment="Center" />
+
+                <TextBlock Text="This is a placeholder intro page. You can replace this copy later with your real marketing text, onboarding details, or app overview."
+                           FontSize="16"
+                           Opacity="0.8"
+                           TextAlignment="Center"
+                           TextWrapping="WrapWholeWords" />
+
+                <TextBlock Text="When you are ready, continue to the login page to sign in."
+                           FontSize="15"
+                           Opacity="0.7"
+                           TextAlignment="Center"
+                           TextWrapping="WrapWholeWords" />
+
+                <Button Content="Continue to Login"
+                        Width="220"
+                        Height="48"
+                        HorizontalAlignment="Center"
+                        Command="{Binding DataContext.GoToLoginCommand, ElementName=RootPage}" />
+            </StackPanel>
+        </Border>
+    </Grid>
 </Page>
