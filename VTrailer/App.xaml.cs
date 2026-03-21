@@ -147,15 +147,17 @@ public partial class App : Application
             new ViewMap<LoginPage, LoginViewModel>(),
             new ViewMap<MainPage, MainViewModel>(),
             new DataViewMap<SecondPage, SecondViewModel, Entity>(),
-            new ViewMap<ProfilePage, ProfileViewModel>()
+            new ViewMap<ProfilePage, ProfileViewModel>(),
+            new ViewMap<IntroPage, IntroViewModel>()
         );
 
         routes.Register(
             new RouteMap("", View: views.FindByViewModel<ShellViewModel>(),
                 Nested:
                 [
+                    new ("Intro", View: views.FindByView<IntroViewModel>(), IsDefault:true),
                     new ("Login", View: views.FindByViewModel<LoginViewModel>()),
-                    new ("Main", View: views.FindByViewModel<MainViewModel>(), IsDefault:true),
+                    new ("Main", View: views.FindByViewModel<MainViewModel>()),
                     new ("Second", View: views.FindByViewModel<SecondViewModel>()),
                     new ("Profile", View: views.FindByViewModel<ProfileViewModel>()),
                 ]

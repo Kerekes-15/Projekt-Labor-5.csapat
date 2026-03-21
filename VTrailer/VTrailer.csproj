@@ -61,4 +61,10 @@
     </Page>
   </ItemGroup>
 
+  <ItemGroup>
+    <Page Update="Presentation\IntroPage.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+  </ItemGroup>
+
 </Project>
