@@ -7,7 +7,6 @@ public partial class LoginViewModel : ObservableObject
     private readonly IAuthenticationService _authenticationService;
     private readonly INavigator _navigator;
 
-    // Ezek maradtak le valószínűleg!
     [ObservableProperty]
     private string _username = "";
 
@@ -45,7 +44,7 @@ public partial class LoginViewModel : ObservableObject
         if (success)
         {
             
-            await _navigator.NavigateViewModelAsync<MainViewModel>(this, qualifier: Qualifiers.ClearBackStack);
+            await _navigator.NavigateViewModelAsync<HomePageViewModel>(this, qualifier: Qualifiers.ClearBackStack);
         }
         else
         {

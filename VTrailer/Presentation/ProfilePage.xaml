@@ -14,15 +14,7 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <utu:NavigationBar Grid.Row="0" Content="Fiók beállítások" Background="#0078D7" Foreground="White" Style="{StaticResource MaterialNavigationBarStyle}">
-            <utu:NavigationBar.MainCommand>
-                <AppBarButton Command="{Binding GoBackCommand}" Foreground="White">
-                    <AppBarButton.Icon>
-                        <FontIcon Glyph="&#xE72B;" />
-                    </AppBarButton.Icon>
-                </AppBarButton>
-            </utu:NavigationBar.MainCommand>
-        </utu:NavigationBar>
+        <TextBlock Text="Fiók Beállítások" FontSize="28" FontWeight="Bold" Margin="10,0,0,24" />
 
         <StackPanel Grid.Row="1" Margin="32" Spacing="24" MaxWidth="500" HorizontalAlignment="Left">
 

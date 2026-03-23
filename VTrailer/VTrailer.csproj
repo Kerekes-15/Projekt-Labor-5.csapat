@@ -46,9 +46,13 @@
 
   <ItemGroup>
     <PackageReference Include="sqlite-net-pcl" />
+    <PackageReference Include="Supabase" />
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Update="Presentation\TrailerPage.xaml.cs">
+      <DependentUpon>TrailerPage.xaml</DependentUpon>
+    </Compile>
     <Compile Update="Presentation\ProfilePage.xaml.cs">
       <DependentUpon>ProfilePage.xaml</DependentUpon>
     </Compile>
@@ -58,6 +62,30 @@
     <Page Update="Presentation\ProfilePage.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
+    </Page>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Page Update="Presentation\HomePage.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Page Update="Presentation\TrailersPage.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Page Update="Presentation\BookingPage.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Page Update="Presentation\MyBookingsPage.xaml">
+      <Generator>MSBuild:Compile</Generator>
     </Page>
   </ItemGroup>
 

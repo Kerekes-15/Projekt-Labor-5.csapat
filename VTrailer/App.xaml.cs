@@ -1,5 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
 using Uno.Resizetizer;
+using VTrailer.Presentation;
 
 namespace VTrailer;
 public partial class App : Application
@@ -14,7 +15,7 @@ public partial class App : Application
     }
 
     protected Window? MainWindow { get; private set; }
-    protected IHost? Host { get; private set; }
+    public IHost? Host { get; private set; }
 
     [SuppressMessage("Trimming", "IL2026:Members annotated with 'RequiresUnreferencedCodeAttribute' require dynamic access otherwise can break functionality when trimming application code", Justification = "Uno.Extensions APIs are used in a way that is safe for trimming in this template context.")]
     protected async override void OnLaunched(LaunchActivatedEventArgs args)
@@ -131,7 +132,7 @@ public partial class App : Application
                 var authenticated = await auth.RefreshAsync();
                 if (authenticated)
                 {
-                    await navigator.NavigateViewModelAsync<MainViewModel>(this, qualifier: Qualifiers.Nested);
+                    await navigator.NavigateViewModelAsync<TrailerViewModel>(this, qualifier: Qualifiers.Nested);
                 }
                 else
                 {
@@ -145,7 +146,8 @@ public partial class App : Application
         views.Register(
             new ViewMap(ViewModel: typeof(ShellViewModel)),
             new ViewMap<LoginPage, LoginViewModel>(),
-            new ViewMap<MainPage, MainViewModel>(),
+            new ViewMap<HomePage, HomePageViewModel>(),
+            new ViewMap<TrailerPage, TrailerViewModel>(),
             new DataViewMap<SecondPage, SecondViewModel, Entity>(),
             new ViewMap<ProfilePage, ProfileViewModel>()
         );
@@ -155,7 +157,8 @@ public partial class App : Application
                 Nested:
                 [
                     new ("Login", View: views.FindByViewModel<LoginViewModel>()),
-                    new ("Main", View: views.FindByViewModel<MainViewModel>(), IsDefault:true),
+                    new ("Home Page", View: views.FindByViewModel<HomePageViewModel>(), IsDefault:true),
+                    new ("TrailerPage", View: views.FindByViewModel<TrailerViewModel>()),
                     new ("Second", View: views.FindByViewModel<SecondViewModel>()),
                     new ("Profile", View: views.FindByViewModel<ProfileViewModel>()),
                 ]

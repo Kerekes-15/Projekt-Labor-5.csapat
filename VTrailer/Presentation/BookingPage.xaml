@@ -1,0 +1,49 @@
+﻿<Page
+    x:Class="VTrailer.Presentation.BookingPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:VTrailer.Presentation"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+
+    <Grid Padding="24">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <TextBlock Text="Utánfutó Foglalása" FontSize="28" FontWeight="Bold" Margin="0,0,0,24" />
+
+        <StackPanel Grid.Row="1" Spacing="16" MaxWidth="500" HorizontalAlignment="Left">
+
+            <ComboBox x:Name="TrailerComboBox" Header="Melyik utánfutót szeretnéd?" 
+                  PlaceholderText="Válassz a listából..." Width="300" 
+                  SelectionChanged="OnSelectionChanged"/>
+
+            <CalendarDatePicker x:Name="BookingDatePicker" Header="Melyik napra?" 
+                            PlaceholderText="Válassz dátumot..." Width="300" 
+                            DateChanged="OnSelectionChanged"/>
+
+            <ComboBox x:Name="TimeSlotComboBox" Header="Idősáv" 
+                  PlaceholderText="Válassz idősávot..." Width="300" 
+                  SelectionChanged="OnSelectionChanged">
+                <x:String>Délelőtt (08:00 - 12:00)</x:String>
+                <x:String>Délután (13:00 - 17:00)</x:String>
+                <x:String>Egész nap (08:00 - 17:00)</x:String>
+            </ComboBox>
+
+            <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,16,0,0">
+                <TextBlock Text="Fizetendő végösszeg:" VerticalAlignment="Center" FontSize="16"/>
+                <TextBlock x:Name="TotalPriceText" Text="0 Ft" FontSize="24" FontWeight="Bold" Foreground="{ThemeResource SystemAccentColor}"/>
+            </StackPanel>
+
+            <TextBlock x:Name="StatusMessage" FontWeight="SemiBold" Visibility="Collapsed" Margin="0,8,0,0"/>
+
+            <Button x:Name="SubmitButton" Content="Foglalás véglegesítése" Style="{ThemeResource AccentButtonStyle}" 
+                Click="OnSubmitBookingClicked" Width="300" Height="48" FontSize="16" Margin="0,16,0,0"/>
+
+        </StackPanel>
+    </Grid>
+</Page>
