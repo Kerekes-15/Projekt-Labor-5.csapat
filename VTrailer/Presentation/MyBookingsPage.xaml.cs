@@ -1,41 +1,49 @@
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using System;
 using VTrailer.Services;
 
 namespace VTrailer.Presentation;
 
 public sealed partial class MyBookingsPage : Page
 {
-    private DatabaseService _dbService;
+    private readonly DatabaseService? _dbService;
 
     public MyBookingsPage()
     {
         this.InitializeComponent();
-        _dbService = new DatabaseService();
+        _dbService = (Application.Current as App)?.Host?.Services.GetService<DatabaseService>();
+        Loaded += MyBookingsPage_Loaded;
+    }
+
+    private void MyBookingsPage_Loaded(object sender, RoutedEventArgs e)
+    {
         LoadMyBookings();
     }
 
     private async void LoadMyBookings()
     {
-        // Megnézzük, ki van bejelentkezve
-        var currentUser = _dbService.CurrentUser;
+        if (_dbService is null)
+        {
+            EmptyStateText.Text = "Nem sikerült csatlakozni a foglalási szolgáltatáshoz.";
+            EmptyStateText.Visibility = Visibility.Visible;
+            BookingsListView.Visibility = Visibility.Collapsed;
+            return;
+        }
 
-        // Ha tesztelünk és nincs bejelentkezve senki, a "tesztuser" adatait kérjük le
+        var currentUser = _dbService.CurrentUser;
         var username = currentUser?.Username ?? "tesztuser";
 
         try
         {
-            // Lekérjük a felhőből az adatokat
             var myBookings = await _dbService.GetMyBookingsAsync(username);
 
-            // Ha üres a lista, megmutatjuk az "üres" üzenetet
             if (myBookings == null || myBookings.Count == 0)
             {
                 EmptyStateText.Visibility = Visibility.Visible;
                 BookingsListView.Visibility = Visibility.Collapsed;
             }
-            else // Ha vannak foglalások, betöltjük a listába
+            else
             {
                 EmptyStateText.Visibility = Visibility.Collapsed;
                 BookingsListView.Visibility = Visibility.Visible;
@@ -44,8 +52,9 @@ public sealed partial class MyBookingsPage : Page
         }
         catch (Exception ex)
         {
-            // Hiba esetén itt tudunk jelezni (most csendben elnyeljük)
-            System.Diagnostics.Debug.WriteLine($"Hiba a betöltéskor: {ex.Message}");
+            EmptyStateText.Text = $"Hiba a foglalások betöltésekor: {ex.Message}";
+            EmptyStateText.Visibility = Visibility.Visible;
+            BookingsListView.Visibility = Visibility.Collapsed;
         }
     }
 }

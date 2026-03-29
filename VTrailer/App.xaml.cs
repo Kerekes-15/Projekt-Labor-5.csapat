@@ -62,6 +62,7 @@ public partial class App : Application
                     configBuilder
                         .EmbeddedSource<App>()
                         .Section<AppConfig>()
+                        .Section<DeliveryOptions>()
                 )
                 // Enable localization (see appsettings.json for supported languages)
                 .UseLocalization()
@@ -109,6 +110,8 @@ public partial class App : Application
                 {
                     // TODO: Register your services
                     services.AddSingleton<VTrailer.Services.DatabaseService>();
+                    services.AddHttpClient<VTrailer.Services.DeliveryQuoteService>();
+                    services.AddTransient<BookingViewModel>();
                     
                 })
                 .UseNavigation(RegisterRoutes)
@@ -132,7 +135,7 @@ public partial class App : Application
                 var authenticated = await auth.RefreshAsync();
                 if (authenticated)
                 {
-                    await navigator.NavigateViewModelAsync<TrailerViewModel>(this, qualifier: Qualifiers.Nested);
+                    await navigator.NavigateViewModelAsync<HomePageViewModel>(this, qualifier: Qualifiers.Nested);
                 }
                 else
                 {

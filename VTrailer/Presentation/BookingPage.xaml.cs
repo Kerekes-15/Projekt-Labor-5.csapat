@@ -1,122 +1,91 @@
+using System.Text.Json;
 using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Controls;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using VTrailer.Models;
-using VTrailer.Services;
+using Microsoft.Web.WebView2.Core;
 
 namespace VTrailer.Presentation;
 
 public sealed partial class BookingPage : Page
 {
-    private DatabaseService _dbService;
-    private List<Trailer> _availableTrailers = new();
-    private decimal _currentCalculatedPrice = 0;
+    private bool _mapInitialized;
 
     public BookingPage()
     {
         this.InitializeComponent();
-        _dbService = new DatabaseService();
-        LoadAvailableTrailers();
+        Loaded += BookingPage_Loaded;
     }
 
-    // 1. Lépés: Betöltjük a felhőből CSAK az "Elérhető" utánfutókat
-    private async void LoadAvailableTrailers()
+    private BookingViewModel? ViewModel => DataContext as BookingViewModel;
+
+    private async void BookingPage_Loaded(object sender, RoutedEventArgs e)
     {
-        var allTrailers = await _dbService.GetTrailersAsync();
-
-        // Kiszűrjük, hogy csak a szabadokat lehessen lefoglalni
-        _availableTrailers = allTrailers.Where(t => t.Status == "Elérhető").ToList();
-
-        // Betöltjük a legördülő menübe, és megmondjuk neki, hogy a nevet (BrandAndModel) mutassa
-        TrailerComboBox.ItemsSource = _availableTrailers;
-        TrailerComboBox.DisplayMemberPath = "BrandAndModel";
-    }
-
-    // 2. Lépés: Automatikus árszámolás, ha a felhasználó kattintgat a menükben
-    private void OnSelectionChanged(object sender, object e)
-    {
-        if (TrailerComboBox.SelectedItem is Trailer selectedTrailer && TimeSlotComboBox.SelectedItem is string selectedTimeSlot)
+        if (_mapInitialized)
         {
-            // Ha délelőtt vagy délután, akkor az ár a fele. Ha egész nap, akkor a teljes napi díj.
-            if (selectedTimeSlot.Contains("Egész nap"))
-            {
-                _currentCalculatedPrice = selectedTrailer.DailyRateFt;
-            }
-            else
-            {
-                _currentCalculatedPrice = selectedTrailer.DailyRateFt / 2;
-            }
-
-            TotalPriceText.Text = $"{_currentCalculatedPrice:N0} Ft";
-        }
-    }
-
-    // 3. Lépés: A Gombnyomás! Mentés a felhőbe.
-    private async void OnSubmitBookingClicked(object sender, RoutedEventArgs e)
-    {
-        // 1. Ellenőrzés: Minden ki van töltve?
-        if (TrailerComboBox.SelectedItem is not Trailer selectedTrailer ||
-            !BookingDatePicker.Date.HasValue ||
-            TimeSlotComboBox.SelectedItem is not string selectedTimeSlot)
-        {
-            ShowMessage("Kérlek, tölts ki minden mezőt a foglaláshoz!", false);
             return;
         }
 
-        // 2. Ellenőrzés: Be van jelentkezve valaki?
-        var currentUser = _dbService.CurrentUser;
-        if (currentUser == null)
+        _mapInitialized = true;
+
+        await MapView.EnsureCoreWebView2Async();
+        MapView.NavigateToString(BookingMapHtmlBuilder.Build(DeliveryOptions.DepotLongitude, DeliveryOptions.DepotLatitude));
+    }
+
+    private void PickupOption_Checked(object sender, RoutedEventArgs e)
+    {
+        ViewModel?.SetTransportMode(isDelivery: false);
+    }
+
+    private void DeliveryOption_Checked(object sender, RoutedEventArgs e)
+    {
+        ViewModel?.SetTransportMode(isDelivery: true);
+    }
+
+    private async void MapView_WebMessageReceived(object sender, CoreWebView2WebMessageReceivedEventArgs args)
+    {
+        if (ViewModel is null)
         {
-            // Mivel tesztelünk, ideiglenesen csinálunk egy "kamu" usert, ha épp nincs bejelentkezve
-            currentUser = new User { Username = "tesztuser", FullName = "Teszt Elek" };
+            return;
         }
 
-        // 3. A Foglalás (Booking) adatainak összeállítása
-        var newBooking = new Booking
+        var message = ParseMessage(args.WebMessageAsJson);
+        if (message?.Type != "locationSelected" || message.Longitude is null || message.Latitude is null)
         {
-            TrailerId = selectedTrailer.Id,
-            TrailerName = selectedTrailer.BrandAndModel,
-            Username = currentUser.Username,
-            CustomerName = currentUser.FullName,
-            BookingDate = BookingDatePicker.Date.Value.DateTime,
-            TimeSlot = selectedTimeSlot,
-            TotalPrice = _currentCalculatedPrice
+            return;
+        }
+
+        await ViewModel.SetSelectedLocationAsync(
+            message.Longitude.Value,
+            message.Latitude.Value,
+            message.Label);
+    }
+
+    private static MapSelectionMessage? ParseMessage(string json)
+    {
+        var options = new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true
         };
 
         try
         {
-            SubmitButton.IsEnabled = false; // Kikapcsoljuk a gombot, amíg tölt
-
-            // 4. Elküldjük a Supabase-nek a foglalást
-            await _dbService.AddBookingAsync(newBooking);
-
-            // 5. Átírjuk a lefoglalt utánfutó státuszát "Kölcsönözve" értékre
-            await _dbService.UpdateTrailerStatusAsync(selectedTrailer.Id, "Kölcsönözve");
-
-            ShowMessage("Sikeres foglalás! Az utánfutó állapota frissítve lett.", true);
-
-            // Frissítjük a listát (hogy eltűnjön a most lefoglalt)
-            TrailerComboBox.SelectedItem = null;
-            LoadAvailableTrailers();
+            return JsonSerializer.Deserialize<MapSelectionMessage>(json, options);
         }
-        catch (Exception ex)
+        catch (JsonException)
         {
-            ShowMessage($"Hiba történt: {ex.Message}", false);
-        }
-        finally
-        {
-            SubmitButton.IsEnabled = true;
+            var nestedJson = JsonSerializer.Deserialize<string>(json, options);
+            return string.IsNullOrWhiteSpace(nestedJson)
+                ? null
+                : JsonSerializer.Deserialize<MapSelectionMessage>(nestedJson, options);
         }
     }
 
-    // Segédfüggvény az üzenetek kiírásához
-    private void ShowMessage(string message, bool isSuccess)
+    private sealed class MapSelectionMessage
     {
-        StatusMessage.Text = message;
-        StatusMessage.Foreground = isSuccess ? new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Green)
-                                             : new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Red);
-        StatusMessage.Visibility = Visibility.Visible;
+        public string? Type { get; init; }
+
+        public double? Latitude { get; init; }
+
+        public double? Longitude { get; init; }
+
+        public string? Label { get; init; }
     }
 }
