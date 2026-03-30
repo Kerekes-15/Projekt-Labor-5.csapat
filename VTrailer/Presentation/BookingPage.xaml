@@ -1,49 +1,157 @@
-﻿<Page
+<Page
     x:Class="VTrailer.Presentation.BookingPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:local="using:VTrailer.Presentation"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d"
     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
 
-    <Grid Padding="24">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
-        </Grid.RowDefinitions>
+    <ScrollViewer>
+        <Grid Padding="24" MaxWidth="1280" ColumnSpacing="24" RowSpacing="24">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="380" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
 
-        <TextBlock Text="Utánfutó Foglalása" FontSize="28" FontWeight="Bold" Margin="0,0,0,24" />
+            <Border Grid.Row="0"
+                    Grid.RowSpan="2"
+                    Background="{ThemeResource SurfaceBrush}"
+                    BorderBrush="{ThemeResource SurfaceVariantBrush}"
+                    BorderThickness="1"
+                    CornerRadius="16"
+                    Padding="24">
+                <StackPanel Spacing="18">
+                    <TextBlock Text="Utánfutó foglalása" FontSize="28" FontWeight="Bold" />
+                    <TextBlock Text="Válassz utánfutót, időpontot, majd döntsd el, hogy telephelyi átvételt vagy kiszállítást kérsz."
+                               TextWrapping="WrapWholeWords"
+                               Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
 
-        <StackPanel Grid.Row="1" Spacing="16" MaxWidth="500" HorizontalAlignment="Left">
+                    <ComboBox Header="Melyik utánfutót szeretnéd?"
+                              Width="320"
+                              ItemsSource="{Binding AvailableTrailers}"
+                              SelectedItem="{Binding SelectedTrailer, Mode=TwoWay}"
+                              DisplayMemberPath="BrandAndModel"
+                              PlaceholderText="Válassz a listából..." />
 
-            <ComboBox x:Name="TrailerComboBox" Header="Melyik utánfutót szeretnéd?" 
-                  PlaceholderText="Válassz a listából..." Width="300" 
-                  SelectionChanged="OnSelectionChanged"/>
+                    <CalendarDatePicker Header="Melyik napra?"
+                                        Width="320"
+                                        Date="{Binding SelectedBookingDate, Mode=TwoWay}" />
 
-            <CalendarDatePicker x:Name="BookingDatePicker" Header="Melyik napra?" 
-                            PlaceholderText="Válassz dátumot..." Width="300" 
-                            DateChanged="OnSelectionChanged"/>
+                    <ComboBox Header="Idősáv"
+                              Width="320"
+                              ItemsSource="{Binding TimeSlots}"
+                              SelectedItem="{Binding SelectedTimeSlot, Mode=TwoWay}"
+                              PlaceholderText="Válassz idősávot..." />
 
-            <ComboBox x:Name="TimeSlotComboBox" Header="Idősáv" 
-                  PlaceholderText="Válassz idősávot..." Width="300" 
-                  SelectionChanged="OnSelectionChanged">
-                <x:String>Délelőtt (08:00 - 12:00)</x:String>
-                <x:String>Délután (13:00 - 17:00)</x:String>
-                <x:String>Egész nap (08:00 - 17:00)</x:String>
-            </ComboBox>
+                    <Border Background="{ThemeResource SurfaceVariantBrush}"
+                            BorderBrush="{ThemeResource SurfaceVariantBrush}"
+                            BorderThickness="1"
+                            CornerRadius="12"
+                            Padding="16">
+                        <StackPanel Spacing="10">
+                            <TextBlock Text="Átvételi mód" FontSize="18" FontWeight="SemiBold" />
+                            <RadioButton x:Name="PickupOption"
+                                         Content="Pickup"
+                                         GroupName="TransportMode"
+                                         IsChecked="True"
+                                         Checked="PickupOption_Checked" />
+                            <RadioButton x:Name="DeliveryOption"
+                                         Content="Delivery"
+                                         GroupName="TransportMode"
+                                         Checked="DeliveryOption_Checked" />
+                            <TextBlock Text="Pickup esetén nincs extra díj, és nem szükséges térképes helyválasztás."
+                                       TextWrapping="WrapWholeWords"
+                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                        </StackPanel>
+                    </Border>
 
-            <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,16,0,0">
-                <TextBlock Text="Fizetendő végösszeg:" VerticalAlignment="Center" FontSize="16"/>
-                <TextBlock x:Name="TotalPriceText" Text="0 Ft" FontSize="24" FontWeight="Bold" Foreground="{ThemeResource SystemAccentColor}"/>
-            </StackPanel>
+                    <Border Background="{ThemeResource SurfaceVariantBrush}"
+                            BorderBrush="{ThemeResource SurfaceVariantBrush}"
+                            BorderThickness="1"
+                            CornerRadius="12"
+                            Padding="16">
+                        <StackPanel Spacing="8">
+                            <TextBlock Text="Árkalkuláció" FontSize="18" FontWeight="SemiBold" />
+                            <TextBlock Text="{Binding RentalPriceSummaryText}" />
+                            <TextBlock Text="{Binding FeeSummaryText}" />
+                            <TextBlock Text="{Binding TotalPriceSummaryText}"
+                                       FontSize="22"
+                                       FontWeight="Bold"
+                                       Foreground="{ThemeResource SystemAccentColor}" />
+                            <TextBlock Text="{Binding DeliveryStatusMessage}"
+                                       TextWrapping="WrapWholeWords"
+                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                        </StackPanel>
+                    </Border>
 
-            <TextBlock x:Name="StatusMessage" FontWeight="SemiBold" Visibility="Collapsed" Margin="0,8,0,0"/>
+                    <TextBlock Text="{Binding StatusMessage}"
+                               Visibility="{Binding StatusVisibility}"
+                               TextWrapping="WrapWholeWords"
+                               Foreground="{Binding StatusForeground}" />
 
-            <Button x:Name="SubmitButton" Content="Foglalás véglegesítése" Style="{ThemeResource AccentButtonStyle}" 
-                Click="OnSubmitBookingClicked" Width="300" Height="48" FontSize="16" Margin="0,16,0,0"/>
+                    <Button Content="Foglalás véglegesítése"
+                            Width="320"
+                            Height="48"
+                            FontSize="16"
+                            Style="{ThemeResource AccentButtonStyle}"
+                            Command="{Binding SubmitBookingCommand}"
+                            IsEnabled="{Binding CanSubmit}" />
+                </StackPanel>
+            </Border>
 
-        </StackPanel>
-    </Grid>
+            <Border Grid.Row="0"
+                    Grid.Column="1"
+                    Background="{ThemeResource SurfaceBrush}"
+                    BorderBrush="{ThemeResource SurfaceVariantBrush}"
+                    BorderThickness="1"
+                    CornerRadius="16"
+                    Padding="20"
+                    Visibility="{Binding MapVisibility}">
+                <StackPanel Spacing="12">
+                    <TextBlock Text="Kiszállítási hely kiválasztása" FontSize="24" FontWeight="Bold" />
+                    <TextBlock Text="Delivery választásakor a térkép megjelenik, és a foglalás csak egy érvényes hely kiválasztása után engedhető tovább."
+                               TextWrapping="WrapWholeWords"
+                               Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                    <Border CornerRadius="14"
+                            BorderBrush="{ThemeResource SurfaceVariantBrush}"
+                            BorderThickness="1"
+                            Height="430">
+                        <WebView2 x:Name="MapView"
+                                  HorizontalAlignment="Stretch"
+                                  VerticalAlignment="Stretch"
+                                  WebMessageReceived="MapView_WebMessageReceived" />
+                    </Border>
+                </StackPanel>
+            </Border>
+
+            <Border Grid.Row="1"
+                    Grid.Column="1"
+                    Background="{ThemeResource SurfaceBrush}"
+                    BorderBrush="{ThemeResource SurfaceVariantBrush}"
+                    BorderThickness="1"
+                    CornerRadius="16"
+                    Padding="20">
+                <StackPanel Spacing="12">
+                    <TextBlock Text="Kiválasztott hely" FontSize="22" FontWeight="Bold" />
+                    <TextBlock Text="{Binding SelectedLocationLabel}" TextWrapping="WrapWholeWords" />
+                    <TextBlock Text="{Binding SelectedCoordinates}"
+                               Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                    <TextBlock Text="{Binding DistanceSummaryText}" />
+                    <TextBlock Text="Pickup esetén ezt a részt figyelmen kívül hagyhatod."
+                               Visibility="{Binding PickupHintVisibility}"
+                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                               TextWrapping="WrapWholeWords" />
+                    <TextBlock Text="Delivery esetén kötelező egy térképes helyet kiválasztani, különben a foglalás nem véglegesíthető."
+                               Visibility="{Binding DeliveryValidationVisibility}"
+                               Foreground="{ThemeResource SystemAccentColor}"
+                               TextWrapping="WrapWholeWords" />
+                </StackPanel>
+            </Border>
+        </Grid>
+    </ScrollViewer>
 </Page>

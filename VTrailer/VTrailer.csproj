@@ -26,6 +26,7 @@
       Dsp;
       Hosting;
       Toolkit;
+      WebView;
       Logging;
       Mvvm;
       Configuration;

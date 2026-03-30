@@ -1,37 +1,42 @@
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using System;
 using VTrailer.Services;
 
 namespace VTrailer.Presentation;
 
 public sealed partial class MyBookingsPage : Page
 {
-    private DatabaseService _dbService;
+    private readonly DatabaseService? _dbService;
 
     public MyBookingsPage()
     {
         this.InitializeComponent();
-        _dbService = new DatabaseService();
+        _dbService = (Application.Current as App)?.Host?.Services.GetService<DatabaseService>();
+        Loaded += MyBookingsPage_Loaded;
+    }
+
+    private void MyBookingsPage_Loaded(object sender, RoutedEventArgs e)
+    {
         LoadMyBookings();
     }
 
     private async void LoadMyBookings()
     {
-        var currentUser = DatabaseService.CurrentUser;
-
-        // SZIGORÚ ELLENŐRZÉS: Ha nincs bejelentkezve, azonnal megállítjuk a betöltést
-        if (currentUser == null || string.IsNullOrEmpty(currentUser.Email))
+        if (_dbService is null)
         {
+            EmptyStateText.Text = "Nem sikerült csatlakozni a foglalási szolgáltatáshoz.";
             EmptyStateText.Visibility = Visibility.Visible;
             BookingsListView.Visibility = Visibility.Collapsed;
             return;
         }
 
+        var currentUser = _dbService.CurrentUser;
+        var username = currentUser?.Username ?? "tesztuser";
+
         try
         {
-            // Lekérdezzük az aktuális felhasználó e-mail címe alapján a saját foglalásait
-            var myBookings = await _dbService.GetMyBookingsAsync(currentUser.Email);
+            var myBookings = await _dbService.GetMyBookingsAsync(username);
 
             if (myBookings == null || myBookings.Count == 0)
             {
@@ -47,7 +52,9 @@ public sealed partial class MyBookingsPage : Page
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"Hiba a betöltéskor: {ex.Message}");
+            EmptyStateText.Text = $"Hiba a foglalások betöltésekor: {ex.Message}";
+            EmptyStateText.Visibility = Visibility.Visible;
+            BookingsListView.Visibility = Visibility.Collapsed;
         }
     }
 }

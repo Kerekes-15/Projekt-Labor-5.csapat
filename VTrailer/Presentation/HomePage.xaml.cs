@@ -72,6 +72,25 @@ public sealed partial class HomePage : Page
             case "Booking":
                 WelcomeTextPanel.Visibility = Visibility.Collapsed;
                 ContentFrame.Navigate(typeof(BookingPage));
+
+                if (ContentFrame.Content is Page bookingPage)
+                {
+                    try
+                    {
+                        var host = (Application.Current as App)?.Host;
+                        if (host != null)
+                        {
+                            using (var scope = host.Services.CreateScope())
+                            {
+                                bookingPage.DataContext = scope.ServiceProvider.GetService<BookingViewModel>();
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[HIBA] Nem sikerült betölteni a foglalási ViewModelt: {ex.Message}");
+                    }
+                }
                 break;
             case "MyBookingsPage":
                 WelcomeTextPanel.Visibility = Visibility.Collapsed;

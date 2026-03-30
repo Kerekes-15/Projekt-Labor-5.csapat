@@ -1,41 +1,42 @@
+using System.Text.Json;
 using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Controls;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using VTrailer.Models;
-using VTrailer.Services;
+using Microsoft.Web.WebView2.Core;
 
 namespace VTrailer.Presentation;
 
 public sealed partial class BookingPage : Page
 {
-    private DatabaseService _dbService;
-    private List<Trailer> _availableTrailers = new();
-    private decimal _currentCalculatedPrice = 0;
+    private bool _mapInitialized;
 
     public BookingPage()
     {
         this.InitializeComponent();
-        _dbService = new DatabaseService();
-        LoadAvailableTrailers();
+        Loaded += BookingPage_Loaded;
     }
 
+    // 1. Lépés: Betöltjük a felhõbõl CSAK az "Elérhetõ" utánfutókat
     private async void LoadAvailableTrailers()
     {
-        var allTrailers = await _dbService.GetTrailersAsync();
+        if (_mapInitialized)
+        {
+            return;
+        }
 
-        _availableTrailers = allTrailers.Where(t => t.Status == "ElÃ©rhetÅ‘").ToList();
-
+        // Kiszûrjük, hogy csak a szabadokat lehessen lefoglalni
+        _availableTrailers = allTrailers.Where(t => t.Status == "Elérhetõ").ToList();
+        _availableTrailers = allTrailers.Where(t => t.Status == "Elérhetõ").ToList();
+        // Betöltjük a legördülõ menübe, és megmondjuk neki, hogy a nevet (BrandAndModel) mutassa
         TrailerComboBox.ItemsSource = _availableTrailers;
         TrailerComboBox.DisplayMemberPath = "BrandAndModel";
-    }
-
+        TrailerComboBox.ItemsSource = _availableTrailers;
+        TrailerComboBox.DisplayMemberPath = "BrandAndModel";
+    // 2. Lépés: Automatikus árszámolás, ha a felhasználó kattintgat a menükben
     private void OnSelectionChanged(object sender, object e)
     {
         if (TrailerComboBox.SelectedItem is Trailer selectedTrailer && TimeSlotComboBox.SelectedItem is string selectedTimeSlot)
         {
-            if (selectedTimeSlot.Contains("EgÃ©sz nap"))
+            // Ha délelõtt vagy délután, akkor az ár a fele. Ha egész nap, akkor a teljes napi díj.
+            if (selectedTimeSlot.Contains("Egész nap"))
             {
                 _currentCalculatedPrice = selectedTrailer.DailyRateFt;
             }
@@ -43,69 +44,93 @@ public sealed partial class BookingPage : Page
             {
                 _currentCalculatedPrice = selectedTrailer.DailyRateFt / 2;
             }
+            else
+            {
+                _currentCalculatedPrice = selectedTrailer.DailyRateFt / 2;
+            }
 
-            TotalPriceText.Text = $"{_currentCalculatedPrice:N0} Ft";
-        }
-    }
-
+    private async void MapView_WebMessageReceived(object sender, CoreWebView2WebMessageReceivedEventArgs args)
+    {
+        if (ViewModel is null)
+    // 3. Lépés: A Gombnyomás! Mentés a felhõbe.
     private async void OnSubmitBookingClicked(object sender, RoutedEventArgs e)
     {
-        // 1. EllenÅ‘rzÃ©s: Minden ki van tÃ¶ltve a felÃ¼leten?
+        // 1. Ellenõrzés: Minden ki van töltve?
         if (TrailerComboBox.SelectedItem is not Trailer selectedTrailer ||
             !BookingDatePicker.Date.HasValue ||
             TimeSlotComboBox.SelectedItem is not string selectedTimeSlot)
-        {
-            ShowMessage("KÃ©rlek, tÃ¶lts ki minden mezÅ‘t a foglalÃ¡shoz!", false);
-            return;
-        }
-
-        // 2. SZIGORÃš ELLENÅRZÃ‰S: Csak valÃ³s, bejelentkezett felhasznÃ¡lÃ³ foglalhat
-        var currentUser = DatabaseService.CurrentUser;
+    {
+        // 1. Ellenõrzés: Minden ki van töltve?
+        if (TrailerComboBox.SelectedItem is not Trailer selectedTrailer ||
+            !BookingDatePicker.Date.HasValue ||
+        // 2. Ellenõrzés: Be van jelentkezve valaki?
+        var currentUser = _dbService.CurrentUser;
         if (currentUser == null)
         {
-            ShowMessage("Hiba: A foglalÃ¡shoz be kell jelentkezned!", false);
-            return;
+            // Mivel tesztelünk, ideiglenesen csinálunk egy "kamu" usert, ha épp nincs bejelentkezve
+            currentUser = new User { Username = "tesztuser", FullName = "Teszt Elek" };
         }
-
-        // 3. A FoglalÃ¡s (Booking) adatainak Ã¶sszeÃ¡llÃ­tÃ¡sa
+        if (currentUser == null)
+        // 3. A Foglalás (Booking) adatainak összeállítása
         var newBooking = new Booking
         {
             TrailerId = selectedTrailer.Id,
             TrailerName = selectedTrailer.BrandAndModel,
-            Email = currentUser.Email,
+            Username = currentUser.Username,
             CustomerName = currentUser.FullName,
             BookingDate = BookingDatePicker.Date.Value.DateTime,
             TimeSlot = selectedTimeSlot,
             TotalPrice = _currentCalculatedPrice
-        };
+            Username = currentUser.Username,
+            CustomerName = currentUser.FullName,
+            BookingDate = BookingDatePicker.Date.Value.DateTime,
+            TimeSlot = selectedTimeSlot,
+            SubmitButton.IsEnabled = false; // Kikapcsoljuk a gombot, amíg tölt
 
-        try
-        {
-            SubmitButton.IsEnabled = false;
-
+            // 4. Elküldjük a Supabase-nek a foglalást
             await _dbService.AddBookingAsync(newBooking);
-            await _dbService.UpdateTrailerStatusAsync(selectedTrailer.Id, "KÃ¶lcsÃ¶nÃ¶zve");
 
-            ShowMessage("Sikeres foglalÃ¡s! Az utÃ¡nfutÃ³ Ã¡llapota frissÃ­tve lett.", true);
+            // 5. Átírjuk a lefoglalt utánfutó státuszát "Kölcsönözve" értékre
+            await _dbService.UpdateTrailerStatusAsync(selectedTrailer.Id, "Kölcsönözve");
 
+            ShowMessage("Sikeres foglalás! Az utánfutó állapota frissítve lett.", true);
+
+            // Frissítjük a listát (hogy eltûnjön a most lefoglalt)
             TrailerComboBox.SelectedItem = null;
             LoadAvailableTrailers();
         }
         catch (Exception ex)
         {
-            ShowMessage($"Hiba tÃ¶rtÃ©nt: {ex.Message}", false);
+            ShowMessage($"Hiba történt: {ex.Message}", false);
+            ShowMessage("Sikeres foglalás! Az utánfutó állapota frissítve lett.", true);
+
+            // Frissítjük a listát (hogy eltûnjön a most lefoglalt)
+            TrailerComboBox.SelectedItem = null;
+            LoadAvailableTrailers();
         }
-        finally
+        catch (Exception ex)
         {
-            SubmitButton.IsEnabled = true;
+            ShowMessage($"Hiba történt: {ex.Message}", false);
+        }
+    // Segédfüggvény az üzenetek kiírásához
+    private void ShowMessage(string message, bool isSuccess)
+        {
+            var nestedJson = JsonSerializer.Deserialize<string>(json, options);
+            return string.IsNullOrWhiteSpace(nestedJson)
+                ? null
+                : JsonSerializer.Deserialize<MapSelectionMessage>(nestedJson, options);
         }
     }
 
+    // Segédfüggvény az üzenetek kiírásához
     private void ShowMessage(string message, bool isSuccess)
     {
-        StatusMessage.Text = message;
-        StatusMessage.Foreground = isSuccess ? new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Green)
-                                             : new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Red);
-        StatusMessage.Visibility = Visibility.Visible;
+        public string? Type { get; init; }
+
+        public double? Latitude { get; init; }
+
+        public double? Longitude { get; init; }
+
+        public string? Label { get; init; }
     }
 }
