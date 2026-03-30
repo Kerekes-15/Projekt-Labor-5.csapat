@@ -89,4 +89,10 @@
     </Page>
   </ItemGroup>
 
+  <ItemGroup>
+    <Page Update="Presentation\RegisterPage.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+  </ItemGroup>
+
 </Project>

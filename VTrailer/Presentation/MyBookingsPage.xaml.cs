@@ -18,24 +18,27 @@ public sealed partial class MyBookingsPage : Page
 
     private async void LoadMyBookings()
     {
-        // Megnézzük, ki van bejelentkezve
-        var currentUser = _dbService.CurrentUser;
+        var currentUser = DatabaseService.CurrentUser;
 
-        // Ha tesztelünk és nincs bejelentkezve senki, a "tesztuser" adatait kérjük le
-        var username = currentUser?.Username ?? "tesztuser";
+        // SZIGORÚ ELLENŐRZÉS: Ha nincs bejelentkezve, azonnal megállítjuk a betöltést
+        if (currentUser == null || string.IsNullOrEmpty(currentUser.Email))
+        {
+            EmptyStateText.Visibility = Visibility.Visible;
+            BookingsListView.Visibility = Visibility.Collapsed;
+            return;
+        }
 
         try
         {
-            // Lekérjük a felhőből az adatokat
-            var myBookings = await _dbService.GetMyBookingsAsync(username);
+            // Lekérdezzük az aktuális felhasználó e-mail címe alapján a saját foglalásait
+            var myBookings = await _dbService.GetMyBookingsAsync(currentUser.Email);
 
-            // Ha üres a lista, megmutatjuk az "üres" üzenetet
             if (myBookings == null || myBookings.Count == 0)
             {
                 EmptyStateText.Visibility = Visibility.Visible;
                 BookingsListView.Visibility = Visibility.Collapsed;
             }
-            else // Ha vannak foglalások, betöltjük a listába
+            else
             {
                 EmptyStateText.Visibility = Visibility.Collapsed;
                 BookingsListView.Visibility = Visibility.Visible;
@@ -44,7 +47,6 @@ public sealed partial class MyBookingsPage : Page
         }
         catch (Exception ex)
         {
-            // Hiba esetén itt tudunk jelezni (most csendben elnyeljük)
             System.Diagnostics.Debug.WriteLine($"Hiba a betöltéskor: {ex.Message}");
         }
     }

@@ -21,25 +21,20 @@ public sealed partial class BookingPage : Page
         LoadAvailableTrailers();
     }
 
-    // 1. Lépés: Betöltjük a felhőből CSAK az "Elérhető" utánfutókat
     private async void LoadAvailableTrailers()
     {
         var allTrailers = await _dbService.GetTrailersAsync();
 
-        // Kiszűrjük, hogy csak a szabadokat lehessen lefoglalni
         _availableTrailers = allTrailers.Where(t => t.Status == "Elérhető").ToList();
 
-        // Betöltjük a legördülő menübe, és megmondjuk neki, hogy a nevet (BrandAndModel) mutassa
         TrailerComboBox.ItemsSource = _availableTrailers;
         TrailerComboBox.DisplayMemberPath = "BrandAndModel";
     }
 
-    // 2. Lépés: Automatikus árszámolás, ha a felhasználó kattintgat a menükben
     private void OnSelectionChanged(object sender, object e)
     {
         if (TrailerComboBox.SelectedItem is Trailer selectedTrailer && TimeSlotComboBox.SelectedItem is string selectedTimeSlot)
         {
-            // Ha délelőtt vagy délután, akkor az ár a fele. Ha egész nap, akkor a teljes napi díj.
             if (selectedTimeSlot.Contains("Egész nap"))
             {
                 _currentCalculatedPrice = selectedTrailer.DailyRateFt;
@@ -53,10 +48,9 @@ public sealed partial class BookingPage : Page
         }
     }
 
-    // 3. Lépés: A Gombnyomás! Mentés a felhőbe.
     private async void OnSubmitBookingClicked(object sender, RoutedEventArgs e)
     {
-        // 1. Ellenőrzés: Minden ki van töltve?
+        // 1. Ellenőrzés: Minden ki van töltve a felületen?
         if (TrailerComboBox.SelectedItem is not Trailer selectedTrailer ||
             !BookingDatePicker.Date.HasValue ||
             TimeSlotComboBox.SelectedItem is not string selectedTimeSlot)
@@ -65,12 +59,12 @@ public sealed partial class BookingPage : Page
             return;
         }
 
-        // 2. Ellenőrzés: Be van jelentkezve valaki?
-        var currentUser = _dbService.CurrentUser;
+        // 2. SZIGORÚ ELLENŐRZÉS: Csak valós, bejelentkezett felhasználó foglalhat
+        var currentUser = DatabaseService.CurrentUser;
         if (currentUser == null)
         {
-            // Mivel tesztelünk, ideiglenesen csinálunk egy "kamu" usert, ha épp nincs bejelentkezve
-            currentUser = new User { Username = "tesztuser", FullName = "Teszt Elek" };
+            ShowMessage("Hiba: A foglaláshoz be kell jelentkezned!", false);
+            return;
         }
 
         // 3. A Foglalás (Booking) adatainak összeállítása
@@ -78,7 +72,7 @@ public sealed partial class BookingPage : Page
         {
             TrailerId = selectedTrailer.Id,
             TrailerName = selectedTrailer.BrandAndModel,
-            Username = currentUser.Username,
+            Email = currentUser.Email,
             CustomerName = currentUser.FullName,
             BookingDate = BookingDatePicker.Date.Value.DateTime,
             TimeSlot = selectedTimeSlot,
@@ -87,17 +81,13 @@ public sealed partial class BookingPage : Page
 
         try
         {
-            SubmitButton.IsEnabled = false; // Kikapcsoljuk a gombot, amíg tölt
+            SubmitButton.IsEnabled = false;
 
-            // 4. Elküldjük a Supabase-nek a foglalást
             await _dbService.AddBookingAsync(newBooking);
-
-            // 5. Átírjuk a lefoglalt utánfutó státuszát "Kölcsönözve" értékre
             await _dbService.UpdateTrailerStatusAsync(selectedTrailer.Id, "Kölcsönözve");
 
             ShowMessage("Sikeres foglalás! Az utánfutó állapota frissítve lett.", true);
 
-            // Frissítjük a listát (hogy eltűnjön a most lefoglalt)
             TrailerComboBox.SelectedItem = null;
             LoadAvailableTrailers();
         }
@@ -111,7 +101,6 @@ public sealed partial class BookingPage : Page
         }
     }
 
-    // Segédfüggvény az üzenetek kiírásához
     private void ShowMessage(string message, bool isSuccess)
     {
         StatusMessage.Text = message;

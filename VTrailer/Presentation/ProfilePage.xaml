@@ -16,37 +16,63 @@
 
         <TextBlock Text="Fiók Beállítások" FontSize="28" FontWeight="Bold" Margin="10,0,0,24" />
 
-        <StackPanel Grid.Row="1" Margin="32" Spacing="24" MaxWidth="500" HorizontalAlignment="Left">
+        <Grid Grid.Row="1" Margin="32,0,32,32">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="60" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
 
-            <FontIcon Glyph="&#xE77B;" FontSize="80" HorizontalAlignment="Left" Margin="0,0,0,10"/>
+            <StackPanel Grid.Column="0" Spacing="24" Width="400" HorizontalAlignment="Left" VerticalAlignment="Top">
 
-            <TextBlock Text="Személyes adatok" FontSize="24" FontWeight="Bold" Margin="0,0,0,10" />
+                <FontIcon Glyph="&#xE77B;" FontSize="80" HorizontalAlignment="Left" Margin="0,0,0,10"/>
+                <TextBlock Text="Személyes adatok" FontSize="24" FontWeight="Bold" Margin="0,0,0,10" />
 
-            <StackPanel Spacing="4">
-                <TextBlock Text="Teljes név" FontSize="14" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-                <TextBlock Text="{Binding CurrentUser.FullName}" FontSize="18" FontWeight="SemiBold" />
+                <StackPanel Spacing="16">
+                    <TextBox Header="Teljes név" Text="{Binding FullName, Mode=TwoWay}" PlaceholderText="Kérlek add meg a teljes neved" HorizontalAlignment="Stretch"/>
+                    <TextBox Header="E-mail cím" Text="{Binding Email, Mode=OneWay}" IsEnabled="False" HorizontalAlignment="Stretch"/>
+
+                    <TextBox Header="Telefonszám" 
+                             Text="{Binding PhoneNumber, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
+                             PlaceholderText="+36 30 123 4567"
+                             PlaceholderForeground="Gray"
+                             HorizontalAlignment="Stretch" 
+                             MaxLength="16"
+                             InputScope="TelephoneNumber"
+                             BeforeTextChanging="PhoneNumber_BeforeTextChanging"/>
+
+                    <TextBox Header="Jogosultság" Text="{Binding Role, Mode=OneWay}" IsEnabled="False" HorizontalAlignment="Stretch"/>
+
+                    <TextBlock Text="{Binding StatusMessage}" Foreground="Green" FontWeight="Bold" HorizontalAlignment="Center" Margin="0,5,0,0"/>
+
+                    <Button Content="Adatok mentése" Command="{Binding SaveProfileCommand}" HorizontalAlignment="Stretch" Height="40" Background="#5b4bc4" Foreground="White"/>
+                </StackPanel>
             </StackPanel>
 
-            <StackPanel Spacing="4">
-                <TextBlock Text="Felhasználónév" FontSize="14" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-                <TextBlock Text="{Binding CurrentUser.Username}" FontSize="18" FontWeight="SemiBold" />
-            </StackPanel>
+            <Border Grid.Column="2" Background="#ffffff" CornerRadius="8" Padding="24" HorizontalAlignment="Left" VerticalAlignment="Top" Width="400" Margin="0,110,0,0">
+                <StackPanel Spacing="16">
+                    <TextBlock Text="Jelszó módosítása" FontWeight="SemiBold" FontSize="20" Foreground="#333333" Margin="0,0,0,10"/>
 
-            <StackPanel Spacing="4">
-                <TextBlock Text="E-mail cím" FontSize="14" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-                <TextBlock Text="{Binding CurrentUser.Email}" FontSize="18" FontWeight="SemiBold" />
-            </StackPanel>
+                    <PasswordBox Header="Új jelszó" 
+                                 Password="{Binding NewPassword, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
+                                 HorizontalAlignment="Stretch" />
 
-            <StackPanel Spacing="4">
-                <TextBlock Text="Telefonszám" FontSize="14" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-                <TextBlock Text="{Binding CurrentUser.PhoneNumber}" FontSize="18" FontWeight="SemiBold" />
-            </StackPanel>
+                    <PasswordBox Header="Új jelszó megerősítése" 
+                                 Password="{Binding ConfirmNewPassword, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" 
+                                 HorizontalAlignment="Stretch" />
+                    <TextBlock Text="{Binding PasswordStatusMessage}" Foreground="Green" FontWeight="Bold" HorizontalAlignment="Center" TextWrapping="Wrap" />
 
-            <StackPanel Spacing="4">
-                <TextBlock Text="Jogosultság" FontSize="14" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-                <TextBlock Text="{Binding CurrentUser.Role}" FontSize="18" FontWeight="SemiBold" />
-            </StackPanel>
+                    <Button Content="Jelszó frissítése" 
+                            Command="{Binding ChangePasswordCommand}" 
+                            Background="#5b4bc4" 
+                            Foreground="White" 
+                            Height="40"
+                            CornerRadius="20"
+                            HorizontalAlignment="Stretch"
+                            Margin="0,16,0,0"/>
+                </StackPanel>
+            </Border>
 
-        </StackPanel>
+        </Grid>
     </Grid>
 </Page>

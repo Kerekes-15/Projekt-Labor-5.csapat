@@ -17,8 +17,8 @@ public class Booking : BaseModel
     [Column("TrailerName")]
     public string? TrailerName { get; set; }
 
-    [Column("Username")]
-    public string? Username { get; set; }
+    [Column("Email")]
+    public string? Email { get; set; }
 
     [Column("CustomerName")]
     public string? CustomerName { get; set; }

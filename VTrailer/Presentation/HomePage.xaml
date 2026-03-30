@@ -9,11 +9,17 @@
     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
 
     <NavigationView x:Name="NavView" 
-                    ItemInvoked="NavView_ItemInvoked" 
-                    IsBackButtonVisible="Collapsed"
-                    IsSettingsVisible="False">
+                  ItemInvoked="NavView_ItemInvoked" 
+                  IsBackButtonVisible="Collapsed"
+                  IsSettingsVisible="False">
         <NavigationView.PaneHeader>
-            <Image Source="ms-appx:///Assets/logo.png" Height="32" Margin="12,16,0,16" HorizontalAlignment="Left" Stretch="Uniform"/>
+
+            <Image Source="ms-appx:///Assets/logo.png" 
+                 Stretch="Uniform" 
+                 Height="120" 
+                 Margin="-30,-30,0,12" 
+                 HorizontalAlignment="Left"/>
+
         </NavigationView.PaneHeader>
 
         <NavigationView.MenuItems>

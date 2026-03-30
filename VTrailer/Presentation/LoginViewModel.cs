@@ -51,5 +51,14 @@ public partial class LoginViewModel : ObservableObject
             
             HasError = true;
         }
+
+
+    }
+
+    [RelayCommand]
+    private async Task GoToRegisterAsync()
+    {
+        // Átdobjuk a felhasználót a regisztrációs oldalra
+        await _navigator.NavigateViewModelAsync<RegisterViewModel>(this);
     }
 }

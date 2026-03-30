@@ -39,24 +39,6 @@ public partial class App : Application
 
                         // Default filters for core Uno Platform namespaces
                         .CoreLogLevel(LogLevel.Warning);
-
-                    // Uno Platform namespace filter groups
-                    // Uncomment individual methods to see more detailed logging
-                    //// Generic Xaml events
-                    //logBuilder.XamlLogLevel(LogLevel.Debug);
-                    //// Layout specific messages
-                    //logBuilder.XamlLayoutLogLevel(LogLevel.Debug);
-                    //// Storage messages
-                    //logBuilder.StorageLogLevel(LogLevel.Debug);
-                    //// Binding related messages
-                    //logBuilder.XamlBindingLogLevel(LogLevel.Debug);
-                    //// Binder memory references tracking
-                    //logBuilder.BinderMemoryReferenceLogLevel(LogLevel.Debug);
-                    //// DevServer and HotReload related
-                    //logBuilder.HotReloadCoreLogLevel(LogLevel.Information);
-                    //// Debug JS interop
-                    //logBuilder.WebAssemblyLogLevel(LogLevel.Debug);
-
                 }, enableUnoLogging: true)
                 .UseConfiguration(configure: configBuilder =>
                     configBuilder
@@ -68,10 +50,9 @@ public partial class App : Application
                 .UseHttp((context, services) =>
                 {
 #if DEBUG
-                // DelegatingHandler will be automatically injected
-                services.AddTransient<DelegatingHandler, DebugHttpHandler>();
+                    // DelegatingHandler will be automatically injected
+                    services.AddTransient<DelegatingHandler, DebugHttpHandler>();
 #endif
-
                 })
                .UseAuthentication(auth =>
                     auth.AddCustom(custom =>
@@ -81,23 +62,28 @@ public partial class App : Application
                                 // Kinyerjük a beírt adatokat
                                 if (credentials?.TryGetValue("Username", out var username) == true &&
                                     credentials?.TryGetValue("Password", out var password) == true)
-                                {   
-                                    // Lekérdezzük az adatbázisból a felhasználót
+                                {
+                                    // Lekérdezzük a szervizt
                                     var dbService = sp.GetRequiredService<VTrailer.Services.DatabaseService>();
-                                    var user = await dbService.GetUserAsync(username, password);
 
-                                    if (user != null)
+                                    // --- ITT A JAVÍTÁS ---
+                                    // Az új boolean (true/false) visszaadó Supabase bejelentkezést hívjuk
+                                    bool success = await dbService.LoginUserAsync(username, password);
+
+                                    if (success)
                                     {
-                                       
                                         credentials ??= new Dictionary<string, string>();
 
-                                        credentials["Role"] = user.Role ?? "";
+                                        // Beállítjuk a jogosultságot. Ha nincs még Role a db-ben, "User" lesz az alap.
+                                        credentials["Role"] = VTrailer.Services.DatabaseService.CurrentUser?.Role ?? "User";
                                         credentials[TokenCacheExtensions.AccessTokenKey] = "RealToken123";
                                         credentials["Expiry"] = DateTime.Now.AddHours(1).ToString("g");
+
                                         return credentials;
                                     }
+                                    // -----------------------
                                 }
-                                
+
                                 return default;
                             })
                             .Refresh((sp, tokenDictionary, cancellationToken) =>
@@ -107,9 +93,9 @@ public partial class App : Application
                 )
                 .ConfigureServices((context, services) =>
                 {
-                    // TODO: Register your services
+                    // Register your services
                     services.AddSingleton<VTrailer.Services.DatabaseService>();
-                    
+
                 })
                 .UseNavigation(RegisterRoutes)
             );
@@ -123,13 +109,11 @@ public partial class App : Application
         Host = await builder.NavigateAsync<Shell>
             (initialNavigate: async (services, navigator) =>
             {
-                
                 var dbService = services.GetRequiredService<VTrailer.Services.DatabaseService>();
-                await dbService.InitializeDatabaseAsync();
 
-                
                 var auth = services.GetRequiredService<IAuthenticationService>();
                 var authenticated = await auth.RefreshAsync();
+
                 if (authenticated)
                 {
                     await navigator.NavigateViewModelAsync<TrailerViewModel>(this, qualifier: Qualifiers.Nested);
@@ -149,7 +133,8 @@ public partial class App : Application
             new ViewMap<HomePage, HomePageViewModel>(),
             new ViewMap<TrailerPage, TrailerViewModel>(),
             new DataViewMap<SecondPage, SecondViewModel, Entity>(),
-            new ViewMap<ProfilePage, ProfileViewModel>()
+            new ViewMap<ProfilePage, ProfileViewModel>(),
+            new ViewMap<RegisterPage, RegisterViewModel>()
         );
 
         routes.Register(

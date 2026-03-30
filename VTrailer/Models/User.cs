@@ -1,15 +1,26 @@
-using SQLite;
+using Supabase.Postgrest.Attributes;
+using Supabase.Postgrest.Models;
 
 namespace VTrailer.Models;
 
-public class User
+[Table("Users")]
+public class User : BaseModel
 {
-    [PrimaryKey, AutoIncrement]
+    [PrimaryKey("id", false)]
     public int Id { get; set; }
-    public string? Username { get; set; }
-    public string? Password { get; set; } 
-    public string? Role { get; set; } 
+
+    [Column("FullName")]
     public string? FullName { get; set; }
+
+    [Column("Password")]
+    public string? Password { get; set; }
+
+    [Column("Role")]
+    public string? Role { get; set; }
+
+    [Column("Email")]
     public string? Email { get; set; }
+
+    [Column("PhoneNumber")]
     public string? PhoneNumber { get; set; }
 }
