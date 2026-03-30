@@ -60,15 +60,15 @@ public partial class App : Application
                         custom
                             .Login(async (sp, dispatcher, credentials, cancellationToken) =>
                             {
-                                // Kinyerjük a beírt adatokat
+                                
                                 if (credentials?.TryGetValue("Username", out var username) == true &&
                                     credentials?.TryGetValue("Password", out var password) == true)
                                 {
-                                    // Lekérdezzük a szervizt
+                                   
                                     var dbService = sp.GetRequiredService<VTrailer.Services.DatabaseService>();
 
-                                    // --- ITT A JAVÍTÁS ---
-                                    // Az új boolean (true/false) visszaadó Supabase bejelentkezést hívjuk
+                                    
+                                    
                                     bool success = await dbService.LoginUserAsync(username, password);
 
                                     if (success)
@@ -82,7 +82,7 @@ public partial class App : Application
 
                                         return credentials;
                                     }
-                                    // -----------------------
+                                    
                                 }
 
                                 return default;

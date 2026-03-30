@@ -207,18 +207,15 @@ public partial class BookingViewModel : ObservableObject
             return;
         }
 
-        var currentUser = _databaseService.CurrentUser ?? new User
-        {
-            Username = "tesztuser",
-            FullName = "Teszt Elek"
-        };
+        var currentUser = DatabaseService.CurrentUser;
+        
 
         var newBooking = new Booking
         {
             TrailerId = SelectedTrailer.Id,
             TrailerName = SelectedTrailer.BrandAndModel,
-            Username = currentUser.Username,
-            CustomerName = currentUser.FullName,
+            Email = currentUser!.Email,
+            CustomerName = currentUser!.FullName,
             BookingDate = SelectedBookingDate.Value.Date,
             TimeSlot = SelectedTimeSlot,
             TotalPrice = CalculatedTotalPriceFt

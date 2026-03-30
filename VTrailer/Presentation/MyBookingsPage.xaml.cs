@@ -31,8 +31,8 @@ public sealed partial class MyBookingsPage : Page
             return;
         }
 
-        var currentUser = _dbService.CurrentUser;
-        var username = currentUser?.Username ?? "tesztuser";
+        var currentUser = DatabaseService.CurrentUser;
+        var username = currentUser?.Email ?? "";
 
         try
         {
