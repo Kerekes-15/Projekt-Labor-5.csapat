@@ -1,4 +1,6 @@
+using System.IO;
 using System.Text.Json;
+using System.Threading.Tasks;
 using Microsoft.UI.Xaml;
 using Microsoft.Web.WebView2.Core;
 
@@ -6,6 +8,8 @@ namespace VTrailer.Presentation;
 
 public sealed partial class BookingPage : Page
 {
+    private const string MapHostName = "maps.vtrailer.local";
+    private const string MapFileName = "booking-map.html";
     private bool _mapInitialized;
 
     public BookingPage()
@@ -26,7 +30,29 @@ public sealed partial class BookingPage : Page
         _mapInitialized = true;
 
         await MapView.EnsureCoreWebView2Async();
-        MapView.NavigateToString(BookingMapHtmlBuilder.Build(DeliveryOptions.DepotLongitude, DeliveryOptions.DepotLatitude));
+        await InitializeMapAsync();
+    }
+
+    private async Task InitializeMapAsync()
+    {
+        if (MapView.CoreWebView2 is null)
+        {
+            return;
+        }
+
+        var mapHostFolder = Path.Combine(Path.GetTempPath(), "VTrailer", "MapHost");
+        Directory.CreateDirectory(mapHostFolder);
+
+        var mapFilePath = Path.Combine(mapHostFolder, MapFileName);
+        var html = BookingMapHtmlBuilder.Build(DeliveryOptions.DepotLongitude, DeliveryOptions.DepotLatitude);
+        await File.WriteAllTextAsync(mapFilePath, html);
+
+        MapView.CoreWebView2.SetVirtualHostNameToFolderMapping(
+            MapHostName,
+            mapHostFolder,
+            CoreWebView2HostResourceAccessKind.Allow);
+
+        MapView.CoreWebView2.Navigate($"https://{MapHostName}/{MapFileName}");
     }
 
     private void PickupOption_Checked(object sender, RoutedEventArgs e)

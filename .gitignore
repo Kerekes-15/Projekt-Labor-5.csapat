@@ -487,3 +487,9 @@ $RECYCLE.BIN/
 solution-config.props
 # Publish Profiles
 !**/Properties/PublishProfiles/*.pubxml
+/VTrailer/ors-response-log.txt
+/VTrailer/.dotnet-home/.dotnet
+/.gitignore
+/.gitignore
+/.gitignore
+/.gitignore

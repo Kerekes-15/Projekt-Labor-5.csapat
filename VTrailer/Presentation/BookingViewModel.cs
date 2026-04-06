@@ -104,6 +104,8 @@ public partial class BookingViewModel : ObservableObject
 
     public Visibility MapVisibility => DeliverySelected ? Visibility.Visible : Visibility.Collapsed;
 
+    public Visibility DeliveryDetailsVisibility => DeliverySelected ? Visibility.Visible : Visibility.Collapsed;
+
     public Visibility PickupHintVisibility => PickupSelected ? Visibility.Visible : Visibility.Collapsed;
 
     public Visibility DeliveryValidationVisibility =>
@@ -372,6 +374,7 @@ public partial class BookingViewModel : ObservableObject
         OnPropertyChanged(nameof(HasBookingBasics));
         OnPropertyChanged(nameof(CanSubmit));
         OnPropertyChanged(nameof(MapVisibility));
+        OnPropertyChanged(nameof(DeliveryDetailsVisibility));
         OnPropertyChanged(nameof(PickupHintVisibility));
         OnPropertyChanged(nameof(DeliveryValidationVisibility));
         OnPropertyChanged(nameof(StatusVisibility));

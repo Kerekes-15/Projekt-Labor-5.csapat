@@ -12,6 +12,7 @@ internal static class BookingMapHtmlBuilder
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="referrer" content="origin" />
     <title>Delivery map</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
@@ -179,7 +180,9 @@ internal static class BookingMapHtmlBuilder
             setSelectionLabel("Searching...");
 
             try {
-                const response = await fetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&q=${encodeURIComponent(query)}`);
+                const response = await fetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&q=${encodeURIComponent(query)}`, {
+                    referrerPolicy: "origin"
+                });
                 const matches = await response.json();
 
                 if (!Array.isArray(matches) || matches.length === 0) {

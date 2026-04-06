@@ -135,17 +135,14 @@
                     BorderBrush="{ThemeResource SurfaceVariantBrush}"
                     BorderThickness="1"
                     CornerRadius="16"
-                    Padding="20">
+                    Padding="20"
+                    Visibility="{Binding DeliveryDetailsVisibility}">
                 <StackPanel Spacing="12">
                     <TextBlock Text="Kiválasztott hely" FontSize="22" FontWeight="Bold" />
                     <TextBlock Text="{Binding SelectedLocationLabel}" TextWrapping="WrapWholeWords" />
                     <TextBlock Text="{Binding SelectedCoordinates}"
                                Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
                     <TextBlock Text="{Binding DistanceSummaryText}" />
-                    <TextBlock Text="Pickup esetén ezt a részt figyelmen kívül hagyhatod."
-                               Visibility="{Binding PickupHintVisibility}"
-                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                               TextWrapping="WrapWholeWords" />
                     <TextBlock Text="Delivery esetén kötelező egy térképes helyet kiválasztani, különben a foglalás nem véglegesíthető."
                                Visibility="{Binding DeliveryValidationVisibility}"
                                Foreground="{ThemeResource SystemAccentColor}"
