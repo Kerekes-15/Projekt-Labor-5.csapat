@@ -6,7 +6,7 @@ namespace VTrailer.Models;
 [Table("Trailers")]
 public class Trailer : BaseModel
 {
-    [PrimaryKey("id", false)]
+    [PrimaryKey("id", true)]
     public int Id { get; set; }
 
     [Column("LicensePlate")]

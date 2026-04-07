@@ -191,4 +191,109 @@ public class DatabaseService
             return false;
         }
     }
+
+    //AUDIT LOG
+    public async Task LogActionAsync(string action, string tableName, string details)
+    {
+        try
+        {
+            var entry = new AuditEntry
+            {
+                Action = action,
+                TargetTable = tableName,
+                UserEmail = CurrentUser?.Email ?? "Rendszer",
+                Details = details
+            };
+            await _supabase.From<AuditEntry>().Insert(entry);
+        }
+        catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Log hiba: {ex.Message}"); }
+    }
+
+    public async Task<List<AuditEntry>> GetAuditLogsAsync()
+    {
+        var response = await _supabase.From<AuditEntry>().Order("created_at", Supabase.Postgrest.Constants.Ordering.Descending).Get();
+        return response.Models;
+    }
+
+    //FOGLALÁS TÖRLÉSE 
+    public async Task<bool> DeleteBookingAsync(int bookingId, string trailerName)
+    {
+        try
+        {
+            await _supabase.InitializeAsync();
+
+            var response = await _supabase.From<Booking>()
+                .Where(b => b.Id == bookingId)
+                .Get();
+
+            var bookingToDelete = response.Models.FirstOrDefault();
+
+            if (bookingToDelete != null)
+            {
+                await _supabase.From<Trailer>()
+                    .Where(t => t.Id == bookingToDelete.TrailerId)
+                    .Set(t => t.Status!, "Elérhető")
+                    .Update();
+            }
+
+            await _supabase.From<Booking>()
+                .Where(b => b.Id == bookingId)
+                .Delete();
+
+            string userWhoDeleted = CurrentUser?.FullName ?? "Ismeretlen";
+            await LogActionAsync("DELETE", "Booking",
+                $"Lemondás: {userWhoDeleted} törölte a foglalását. Utánfutó: {trailerName} felszabadítva.");
+
+            return true;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Hiba a törlésnél: {ex.Message}");
+            return false;
+        }
+    }
+
+    public async Task<List<Booking>> GetAllBookingsAsync()
+    {
+        try
+        {
+           
+            var response = await _supabase.From<Booking>()
+                .Order("BookingDate", Supabase.Postgrest.Constants.Ordering.Descending)
+                .Get();
+
+            return response.Models;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Hiba az összes foglalás lekérésekor: {ex.Message}");
+            return new List<Booking>(); 
+        }
+    }
+    public async Task<bool> ReturnTrailerAsync(Booking booking)
+    {
+        try
+        {
+            await _supabase.From<Trailer>()
+                .Where(t => t.Id == booking.TrailerId)
+                .Set(t => t.Status!, "Elérhető")
+                .Update();
+
+            await _supabase.From<Booking>()
+                .Where(b => b.TrailerId == booking.TrailerId)
+                .Where(b => b.TimeSlot == booking.TimeSlot)
+                .Where(b => b.CustomerName == booking.CustomerName)
+                .Delete();
+
+            await LogActionAsync("RETURN", "Booking", $"Utánfutó visszavéve. Típus: {booking.TrailerName}, Ügyfél: {booking.CustomerName}");
+
+            return true;
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine(ex.Message);
+            return false;
+        }
+    }
+
 }

@@ -276,7 +276,7 @@ public partial class BookingViewModel : ObservableObject
             IsSubmitting = true;
             UpdateDerivedState();
 
-            await _databaseService.AddBookingsAsync(bookingsToSave);
+            await _databaseService.AddBookingAsync(bookingsToSave.First());
             await _databaseService.UpdateTrailerStatusAsync(SelectedTrailer.Id, "Kölcsönözve");
 
             var successPrefix = IsMultiDayBooking
@@ -399,48 +399,21 @@ public partial class BookingViewModel : ObservableObject
         var startDate = SelectedBookingDate!.Value.Date;
         var endDate = SelectedBookingEndDate!.Value.Date;
 
-        if (!IsMultiDayBooking)
+        var singleBooking = new Booking
         {
-            return new List<Booking>
-            {
-                new()
-                {
-                    TrailerId = selectedTrailer.Id,
-                    TrailerName = selectedTrailer.BrandAndModel,
-                    Email = currentUser.Email,
-                    CustomerName = currentUser.FullName,
-                    BookingDate = startDate,
-                    TimeSlot = SelectedTimeSlot,
-                    TotalPrice = CalculatedTotalPriceFt
-                }
-            };
-        }
+            
+            TrailerId = selectedTrailer.Id,
+            TrailerName = selectedTrailer.BrandAndModel,
+            Email = currentUser.Email,
+            CustomerName = currentUser.FullName,
+            BookingDate = startDate,
+            TimeSlot = IsMultiDayBooking
+                ? BookingTimeSlotMetadata.CreateMultiDayValue(startDate, endDate)
+                : SelectedTimeSlot,
+            TotalPrice = CalculatedTotalPriceFt
+        };
 
-        var bookings = new List<Booking>();
-        var encodedTimeSlot = BookingTimeSlotMetadata.CreateMultiDayValue(startDate, endDate);
-        var deliveryFee = DeliverySelected ? CurrentQuote?.FeeFt ?? 0m : 0m;
-
-        for (var day = startDate; day <= endDate; day = day.AddDays(1))
-        {
-            var dayPrice = selectedTrailer.DailyRateFt;
-            if (day == startDate)
-            {
-                dayPrice += deliveryFee;
-            }
-
-            bookings.Add(new Booking
-            {
-                TrailerId = selectedTrailer.Id,
-                TrailerName = selectedTrailer.BrandAndModel,
-                Email = currentUser.Email,
-                CustomerName = currentUser.FullName,
-                BookingDate = day,
-                TimeSlot = encodedTimeSlot,
-                TotalPrice = dayPrice
-            });
-        }
-
-        return bookings;
+        return new List<Booking> { singleBooking };
     }
 
     private void ResetForm()

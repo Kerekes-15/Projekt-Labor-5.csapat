@@ -17,7 +17,7 @@
             <TextBlock Text="VTrailer Kölcsönző" FontSize="28" FontWeight="Bold" HorizontalAlignment="Center" />
             <TextBlock Text="Kérlek jelentkezz be a folytatáshoz!" FontSize="14" HorizontalAlignment="Center" Margin="0,0,0,10" Opacity="0.7"/>
 
-            <TextBox Text="{Binding Username, Mode=TwoWay}" PlaceholderText="Felhasználónév" HorizontalAlignment="Stretch" />
+            <TextBox Text="{Binding Username, Mode=TwoWay}" PlaceholderText="Email-cím" HorizontalAlignment="Stretch" />
 
             <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
                 <PasswordBox x:Name="LoginPasswordBox"

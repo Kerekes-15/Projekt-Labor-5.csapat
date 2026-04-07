@@ -13,7 +13,7 @@ using Microsoft.UI.Xaml.Navigation;
 using Windows.Foundation;
 using Windows.Foundation.Collections;
 using Microsoft.Extensions.DependencyInjection;
-
+using VTrailer.Services;
 
 namespace VTrailer.Presentation;
 
@@ -23,6 +23,30 @@ public sealed partial class HomePage : Page
     {
         this.InitializeComponent();
         NavView.SelectedItem = NavView.MenuItems[0];
+        this.Loaded += HomePage_Loaded;
+    }
+
+    private void HomePage_Loaded(object sender, RoutedEventArgs e)
+    {
+        var user = DatabaseService.CurrentUser;
+
+        if (user == null || (user.Role != "Adminisztrátor" && user.Role != "Alkalmazott"))
+        {
+            AllBookingsMenu.Visibility = Visibility.Collapsed;
+        }
+        else
+        {
+            AllBookingsMenu.Visibility = Visibility.Visible;
+        }
+
+        if (user == null || user.Role != "Adminisztrátor")
+        {
+            AuditLogMenu.Visibility = Visibility.Collapsed;
+        }
+        else
+        {
+            AuditLogMenu.Visibility = Visibility.Visible;
+        }
     }
 
     private void ThemeToggle_Toggled(object sender, RoutedEventArgs e)
@@ -96,6 +120,14 @@ public sealed partial class HomePage : Page
                 WelcomeTextPanel.Visibility = Visibility.Collapsed;
                 ContentFrame.Navigate(typeof(MyBookingsPage));
                 break;
+            case "AllBookingsPage":
+                WelcomeTextPanel.Visibility = Visibility.Collapsed;
+                ContentFrame.Navigate(typeof(AllBookingsPage));
+                break;
+            case "AuditLog":
+                WelcomeTextPanel.Visibility = Visibility.Collapsed;
+                ContentFrame.Navigate(typeof(AuditLog));
+                break;
             case "Settings":
                 WelcomeTextPanel.Visibility = Visibility.Collapsed;
                 ContentFrame.Navigate(typeof(ProfilePage));
@@ -119,12 +151,9 @@ public sealed partial class HomePage : Page
                     }
                 }
                 break;
-
             case "Logout":
                 this.Frame?.Navigate(typeof(LoginPage));
                 break;
         }
     }
 }
-
-

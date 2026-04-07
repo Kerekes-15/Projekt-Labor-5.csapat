@@ -31,6 +31,9 @@
                     <FontIcon Glyph="&#xE81C;"/>
                 </NavigationViewItem.Icon>
             </NavigationViewItem>
+
+            <NavigationViewItem x:Name="AllBookingsMenu" Content="Összes foglalás" Tag="AllBookingsPage" Icon="Library" />
+            <NavigationViewItem x:Name="AuditLogMenu" Content="Rendszer Napló" Tag="AuditLog" Icon="Document" />
         </NavigationView.MenuItems>
 
         <NavigationView.FooterMenuItems>

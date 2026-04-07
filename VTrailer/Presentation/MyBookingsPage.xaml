@@ -24,15 +24,24 @@
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
 
-                            <StackPanel>
+                            <StackPanel Grid.Column="0" VerticalAlignment="Center">
                                 <TextBlock Text="{Binding TrailerName}" FontSize="18" FontWeight="Bold"/>
                                 <TextBlock Text="{Binding DisplayDate}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Margin="0,4,0,0"/>
                                 <TextBlock Text="{Binding DisplayTimeSlot}" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
                             </StackPanel>
 
-                            <TextBlock Grid.Column="1" Text="{Binding DisplayPrice}" FontSize="18" FontWeight="Bold" Foreground="{ThemeResource SystemAccentColor}" VerticalAlignment="Center"/>
+                            <TextBlock Grid.Column="1" Text="{Binding DisplayPrice}" FontSize="18" FontWeight="Bold" Foreground="{ThemeResource SystemAccentColor}" VerticalAlignment="Center" Margin="0,0,24,0"/>
+
+                            <Button Grid.Column="2" Content="Törlés" Foreground="White" CornerRadius="6" VerticalAlignment="Center" Click="OnDeleteBookingClick">
+                                <Button.Resources>
+                                    <SolidColorBrush x:Key="ButtonBackground" Color="#d32f2f"/>
+                                    <SolidColorBrush x:Key="ButtonBackgroundPointerOver" Color="#b71c1c"/>
+                                    <SolidColorBrush x:Key="ButtonBackgroundPressed" Color="#7f0000"/>
+                                </Button.Resources>
+                            </Button>
                         </Grid>
                     </Border>
                 </DataTemplate>

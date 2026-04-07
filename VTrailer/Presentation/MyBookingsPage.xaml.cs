@@ -89,6 +89,7 @@ public sealed partial class MyBookingsPage : Page
             }
 
             items.Add(new BookingListItem(
+                booking.Id,
                 booking.TrailerName ?? string.Empty,
                 booking.DisplayDate,
                 booking.DisplayTimeSlot,
@@ -104,6 +105,7 @@ public sealed partial class MyBookingsPage : Page
             var totalPrice = group.Sum(booking => booking.TotalPrice);
 
             items.Add(new BookingListItem(
+                firstBooking.Id,
                 firstBooking.TrailerName ?? string.Empty,
                 $"{startDate:yyyy. MM. dd.} - {endDate:yyyy. MM. dd.}",
                 $"Egész nap ({dayCount} nap)",
@@ -117,9 +119,49 @@ public sealed partial class MyBookingsPage : Page
     }
 
     private sealed record BookingListItem(
+        int BookingId,
         string TrailerName,
         string DisplayDate,
         string DisplayTimeSlot,
         string DisplayPrice,
         DateTime SortDate);
+
+
+    private async void OnDeleteBookingClick(object sender, RoutedEventArgs e)
+    {
+
+        if ((sender as Button)?.DataContext is BookingListItem selectedItem)
+        {
+
+            ContentDialog deleteDialog = new ContentDialog
+            {
+                Title = "Foglalás lemondása",
+                Content = $"Biztosan törölni szeretnéd a(z) {selectedItem.TrailerName} utánfutóra szóló foglalásodat? Ez a művelet nem vonható vissza.",
+                PrimaryButtonText = "Igen, törlöm",
+                CloseButtonText = "Mégse",
+                DefaultButton = ContentDialogButton.Close,
+                XamlRoot = this.XamlRoot
+            };
+
+            ContentDialogResult result = await deleteDialog.ShowAsync();
+
+            if (result == ContentDialogResult.Primary)
+            {
+                try
+                {
+
+                    bool success = await _dbService!.DeleteBookingAsync(selectedItem.BookingId, selectedItem.TrailerName);
+
+                    if (success)    
+                    {
+                        LoadMyBookings();
+                    }
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"Hiba a törlés során: {ex.Message}");
+                }
+            }
+        }
+    }
 }

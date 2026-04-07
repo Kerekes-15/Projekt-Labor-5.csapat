@@ -8,7 +8,7 @@ namespace VTrailer.Models;
 [Table("Bookings")]
 public class Booking : BaseModel
 {
-    [PrimaryKey("id", false)]
+    [PrimaryKey("id", true)]
     public int Id { get; set; }
 
     [Column("TrailerId")]

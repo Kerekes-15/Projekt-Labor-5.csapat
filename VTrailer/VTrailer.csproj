@@ -96,4 +96,16 @@
     </Page>
   </ItemGroup>
 
+  <ItemGroup>
+    <Page Update="Presentation\AuditLog.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Page Update="Presentation\AllBookingsPage.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+  </ItemGroup>
+
 </Project>
