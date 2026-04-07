@@ -1,6 +1,10 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using VTrailer.Models;
 using VTrailer.Services;
 
 namespace VTrailer.Presentation;
@@ -37,8 +41,9 @@ public sealed partial class MyBookingsPage : Page
         try
         {
             var myBookings = await _dbService.GetMyBookingsAsync(username);
+            var bookingItems = BuildBookingItems(myBookings);
 
-            if (myBookings == null || myBookings.Count == 0)
+            if (bookingItems.Count == 0)
             {
                 EmptyStateText.Visibility = Visibility.Visible;
                 BookingsListView.Visibility = Visibility.Collapsed;
@@ -47,7 +52,7 @@ public sealed partial class MyBookingsPage : Page
             {
                 EmptyStateText.Visibility = Visibility.Collapsed;
                 BookingsListView.Visibility = Visibility.Visible;
-                BookingsListView.ItemsSource = myBookings;
+                BookingsListView.ItemsSource = bookingItems;
             }
         }
         catch (Exception ex)
@@ -57,4 +62,64 @@ public sealed partial class MyBookingsPage : Page
             BookingsListView.Visibility = Visibility.Collapsed;
         }
     }
+
+    private static List<BookingListItem> BuildBookingItems(IEnumerable<Booking>? bookings)
+    {
+        if (bookings is null)
+        {
+            return [];
+        }
+
+        var items = new List<BookingListItem>();
+        var multiDayGroups = new Dictionary<string, List<Booking>>();
+
+        foreach (var booking in bookings.OrderByDescending(b => b.BookingDate))
+        {
+            if (BookingTimeSlotMetadata.TryParseMultiDay(booking.TimeSlot, out var startDate, out var endDate))
+            {
+                var key = $"{booking.TrailerId}:{startDate:yyyy-MM-dd}:{endDate:yyyy-MM-dd}";
+                if (!multiDayGroups.TryGetValue(key, out var groupedBookings))
+                {
+                    groupedBookings = [];
+                    multiDayGroups[key] = groupedBookings;
+                }
+
+                groupedBookings.Add(booking);
+                continue;
+            }
+
+            items.Add(new BookingListItem(
+                booking.TrailerName ?? string.Empty,
+                booking.DisplayDate,
+                booking.DisplayTimeSlot,
+                booking.DisplayPrice,
+                booking.BookingDate));
+        }
+
+        foreach (var group in multiDayGroups.Values)
+        {
+            var firstBooking = group[0];
+            BookingTimeSlotMetadata.TryParseMultiDay(firstBooking.TimeSlot, out var startDate, out var endDate);
+            var dayCount = (endDate - startDate).Days + 1;
+            var totalPrice = group.Sum(booking => booking.TotalPrice);
+
+            items.Add(new BookingListItem(
+                firstBooking.TrailerName ?? string.Empty,
+                $"{startDate:yyyy. MM. dd.} - {endDate:yyyy. MM. dd.}",
+                $"Egész nap ({dayCount} nap)",
+                $"{totalPrice:N0} Ft",
+                startDate));
+        }
+
+        return items
+            .OrderByDescending(item => item.SortDate)
+            .ToList();
+    }
+
+    private sealed record BookingListItem(
+        string TrailerName,
+        string DisplayDate,
+        string DisplayTimeSlot,
+        string DisplayPrice,
+        DateTime SortDate);
 }

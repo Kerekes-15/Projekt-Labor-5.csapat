@@ -29,7 +29,7 @@
                             <StackPanel>
                                 <TextBlock Text="{Binding TrailerName}" FontSize="18" FontWeight="Bold"/>
                                 <TextBlock Text="{Binding DisplayDate}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Margin="0,4,0,0"/>
-                                <TextBlock Text="{Binding TimeSlot}" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                <TextBlock Text="{Binding DisplayTimeSlot}" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
                             </StackPanel>
 
                             <TextBlock Grid.Column="1" Text="{Binding DisplayPrice}" FontSize="18" FontWeight="Bold" Foreground="{ThemeResource SystemAccentColor}" VerticalAlignment="Center"/>

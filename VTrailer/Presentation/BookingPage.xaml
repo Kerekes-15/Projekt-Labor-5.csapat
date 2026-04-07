@@ -27,7 +27,7 @@
                     Padding="24">
                 <StackPanel Spacing="18">
                     <TextBlock Text="Utánfutó foglalása" FontSize="28" FontWeight="Bold" />
-                    <TextBlock Text="Válassz utánfutót, időpontot, majd döntsd el, hogy telephelyi átvételt vagy kiszállítást kérsz."
+                    <TextBlock Text="Válassz utánfutót, add meg a kezdő és záró napot, majd döntsd el, hogy telephelyi átvételt vagy kiszállítást kérsz."
                                TextWrapping="WrapWholeWords"
                                Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
 
@@ -38,15 +38,30 @@
                               DisplayMemberPath="BrandAndModel"
                               PlaceholderText="Válassz a listából..." />
 
-                    <CalendarDatePicker Header="Melyik napra?"
+                    <CalendarDatePicker Header="Kezdő nap"
                                         Width="320"
                                         Date="{Binding SelectedBookingDate, Mode=TwoWay}" />
+
+                    <CalendarDatePicker Header="Záró nap"
+                                        Width="320"
+                                        Date="{Binding SelectedBookingEndDate, Mode=TwoWay}" />
 
                     <ComboBox Header="Idősáv"
                               Width="320"
                               ItemsSource="{Binding TimeSlots}"
                               SelectedItem="{Binding SelectedTimeSlot, Mode=TwoWay}"
-                              PlaceholderText="Válassz idősávot..." />
+                              PlaceholderText="Válassz idősávot..."
+                              Visibility="{Binding TimeSlotVisibility}" />
+
+                    <StackPanel Spacing="4"
+                                Visibility="{Binding MultiDaySummaryVisibility}">
+                        <TextBlock Text="{Binding MultiDayBookingSummaryText}"
+                                   FontSize="16"
+                                   FontWeight="SemiBold" />
+                        <TextBlock Text="Többnapos foglalás esetén minden nap teljes napként kerül elszámolásra."
+                                   TextWrapping="WrapWholeWords"
+                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                    </StackPanel>
 
                     <Border Background="{ThemeResource SurfaceVariantBrush}"
                             BorderBrush="{ThemeResource SurfaceVariantBrush}"

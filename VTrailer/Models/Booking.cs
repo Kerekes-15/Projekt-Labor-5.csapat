@@ -33,7 +33,13 @@ public class Booking : BaseModel
     public decimal TotalPrice { get; set; }
   
     [JsonIgnore]
-    public string DisplayDate => BookingDate.ToString("yyyy. MM. dd.");
+    public string DisplayDate =>
+        BookingTimeSlotMetadata.TryParseMultiDay(TimeSlot, out var startDate, out var endDate)
+            ? $"{startDate:yyyy. MM. dd.} - {endDate:yyyy. MM. dd.}"
+            : BookingDate.ToString("yyyy. MM. dd.");
+
+    [JsonIgnore]
+    public string DisplayTimeSlot => BookingTimeSlotMetadata.GetDisplayLabel(TimeSlot);
 
     [JsonIgnore]
     public string DisplayPrice => $"{TotalPrice:N0} Ft";

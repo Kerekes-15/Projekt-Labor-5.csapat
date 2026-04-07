@@ -1,7 +1,13 @@
+using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using Microsoft.Extensions.Options;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Media;
+using VTrailer.Models;
 using VTrailer.Services;
 
 namespace VTrailer.Presentation;
@@ -15,9 +21,9 @@ public partial class BookingViewModel : ObservableObject
 
     public ObservableCollection<string> TimeSlots { get; } =
     [
-        "Délelőtt (08:00 - 12:00)",
-        "Délután (13:00 - 17:00)",
-        "Egész nap (08:00 - 17:00)"
+        BookingTimeSlotMetadata.MorningDisplay,
+        BookingTimeSlotMetadata.AfternoonDisplay,
+        BookingTimeSlotMetadata.FullDayDisplay
     ];
 
     public BookingViewModel(
@@ -45,6 +51,9 @@ public partial class BookingViewModel : ObservableObject
 
     [ObservableProperty]
     private DateTimeOffset? _selectedBookingDate;
+
+    [ObservableProperty]
+    private DateTimeOffset? _selectedBookingEndDate;
 
     [ObservableProperty]
     private string? _selectedTimeSlot;
@@ -94,7 +103,8 @@ public partial class BookingViewModel : ObservableObject
     public bool HasBookingBasics =>
         SelectedTrailer is not null &&
         SelectedBookingDate.HasValue &&
-        !string.IsNullOrWhiteSpace(SelectedTimeSlot);
+        SelectedBookingEndDate.HasValue &&
+        (IsMultiDayBooking || !string.IsNullOrWhiteSpace(SelectedTimeSlot));
 
     public bool CanSubmit =>
         HasBookingBasics &&
@@ -108,6 +118,10 @@ public partial class BookingViewModel : ObservableObject
 
     public Visibility PickupHintVisibility => PickupSelected ? Visibility.Visible : Visibility.Collapsed;
 
+    public Visibility TimeSlotVisibility => IsMultiDayBooking ? Visibility.Collapsed : Visibility.Visible;
+
+    public Visibility MultiDaySummaryVisibility => IsMultiDayBooking ? Visibility.Visible : Visibility.Collapsed;
+
     public Visibility DeliveryValidationVisibility =>
         DeliverySelected && !HasDeliveryQuote && !IsCalculatingRoute ? Visibility.Visible : Visibility.Collapsed;
 
@@ -118,13 +132,17 @@ public partial class BookingViewModel : ObservableObject
 
     public string TotalPriceText => $"{CalculatedTotalPriceFt:N0} Ft";
 
-    public string RentalPriceSummaryText => $"Bérleti díj: {BasePriceText}";
+    public string RentalPriceSummaryText => IsMultiDayBooking
+        ? $"Bérleti díj ({BookingDayCount} nap): {BasePriceText}"
+        : $"Bérleti díj: {BasePriceText}";
 
     public string TotalPriceSummaryText => $"Fizetendő végösszeg: {TotalPriceText}";
 
     public string DistanceSummaryText => $"Szállítási útvonal: {DeliveryDistanceText}";
 
     public string FeeSummaryText => $"Extra díj: {DeliveryFeeText}";
+
+    public string MultiDayBookingSummaryText => $"Foglalás {BookingDayCount} napra";
 
     public Brush StatusForeground => IsStatusSuccess
         ? new SolidColorBrush(Microsoft.UI.Colors.ForestGreen)
@@ -140,6 +158,24 @@ public partial class BookingViewModel : ObservableObject
 
     private decimal CalculatedTotalPriceFt => BaseRentalPriceFt + (DeliverySelected ? CurrentQuote?.FeeFt ?? 0m : 0m);
 
+    private bool IsMultiDayBooking =>
+        SelectedBookingDate.HasValue &&
+        SelectedBookingEndDate.HasValue &&
+        SelectedBookingEndDate.Value.Date > SelectedBookingDate.Value.Date;
+
+    private int BookingDayCount
+    {
+        get
+        {
+            if (!SelectedBookingDate.HasValue || !SelectedBookingEndDate.HasValue)
+            {
+                return 0;
+            }
+
+            return (SelectedBookingEndDate.Value.Date - SelectedBookingDate.Value.Date).Days + 1;
+        }
+    }
+
     partial void OnSelectedTrailerChanged(Trailer? value)
     {
         ClearStatus();
@@ -148,6 +184,23 @@ public partial class BookingViewModel : ObservableObject
 
     partial void OnSelectedBookingDateChanged(DateTimeOffset? value)
     {
+        if (value.HasValue && (!SelectedBookingEndDate.HasValue || SelectedBookingEndDate.Value.Date < value.Value.Date))
+        {
+            SelectedBookingEndDate = new DateTimeOffset(value.Value.Date);
+        }
+
+        ClearStatus();
+        UpdateDerivedState();
+    }
+
+    partial void OnSelectedBookingEndDateChanged(DateTimeOffset? value)
+    {
+        if (value.HasValue && SelectedBookingDate.HasValue && value.Value.Date < SelectedBookingDate.Value.Date)
+        {
+            SelectedBookingEndDate = new DateTimeOffset(SelectedBookingDate.Value.Date);
+            return;
+        }
+
         ClearStatus();
         UpdateDerivedState();
     }
@@ -203,37 +256,36 @@ public partial class BookingViewModel : ObservableObject
     [RelayCommand]
     private async Task SubmitBookingAsync()
     {
-        if (!CanSubmit || SelectedTrailer is null || !SelectedBookingDate.HasValue || string.IsNullOrWhiteSpace(SelectedTimeSlot))
+        if (!CanSubmit || SelectedTrailer is null || !SelectedBookingDate.HasValue || !SelectedBookingEndDate.HasValue)
         {
             SetStatus("Kérlek, tölts ki minden kötelező mezőt. Delivery esetén térképes helymegjelölés is szükséges.", false);
             return;
         }
 
         var currentUser = DatabaseService.CurrentUser;
-        
-
-        var newBooking = new Booking
+        if (currentUser is null)
         {
-            TrailerId = SelectedTrailer.Id,
-            TrailerName = SelectedTrailer.BrandAndModel,
-            Email = currentUser!.Email,
-            CustomerName = currentUser!.FullName,
-            BookingDate = SelectedBookingDate.Value.Date,
-            TimeSlot = SelectedTimeSlot,
-            TotalPrice = CalculatedTotalPriceFt
-        };
+            SetStatus("A foglalás mentéséhez bejelentkezett felhasználó szükséges.", false);
+            return;
+        }
+
+        var bookingsToSave = BuildBookingsToSave(currentUser, SelectedTrailer);
 
         try
         {
             IsSubmitting = true;
             UpdateDerivedState();
 
-            await _databaseService.AddBookingAsync(newBooking);
+            await _databaseService.AddBookingsAsync(bookingsToSave);
             await _databaseService.UpdateTrailerStatusAsync(SelectedTrailer.Id, "Kölcsönözve");
 
+            var successPrefix = IsMultiDayBooking
+                ? $"Sikeres {BookingDayCount} napos foglalás. Fizetendő végösszeg: {TotalPriceText}."
+                : $"Sikeres foglalás. Fizetendő végösszeg: {TotalPriceText}.";
+
             var successMessage = PickupSelected
-                ? $"Sikeres foglalás. Fizetendő végösszeg: {TotalPriceText}. Telephelyi átvétel lett kiválasztva."
-                : $"Sikeres foglalás. Fizetendő végösszeg: {TotalPriceText}. Kiszállítás ide: {SelectedLocationLabel}.";
+                ? $"{successPrefix} Telephelyi átvétel lett kiválasztva."
+                : $"{successPrefix} Kiszállítás ide: {SelectedLocationLabel}.";
 
             SetStatus(successMessage, true);
             await LoadAvailableTrailersAsync();
@@ -322,20 +374,80 @@ public partial class BookingViewModel : ObservableObject
 
     private decimal CalculateBaseRentalPrice()
     {
-        if (SelectedTrailer is null || string.IsNullOrWhiteSpace(SelectedTimeSlot))
+        if (SelectedTrailer is null || !SelectedBookingDate.HasValue || !SelectedBookingEndDate.HasValue)
         {
             return 0m;
         }
 
-        return SelectedTimeSlot.Contains("Egész nap", StringComparison.OrdinalIgnoreCase)
+        if (IsMultiDayBooking)
+        {
+            return BookingDayCount * SelectedTrailer.DailyRateFt;
+        }
+
+        if (string.IsNullOrWhiteSpace(SelectedTimeSlot))
+        {
+            return 0m;
+        }
+
+        return BookingTimeSlotMetadata.IsFullDay(SelectedTimeSlot)
             ? SelectedTrailer.DailyRateFt
             : SelectedTrailer.DailyRateFt / 2m;
+    }
+
+    private IReadOnlyList<Booking> BuildBookingsToSave(User currentUser, Trailer selectedTrailer)
+    {
+        var startDate = SelectedBookingDate!.Value.Date;
+        var endDate = SelectedBookingEndDate!.Value.Date;
+
+        if (!IsMultiDayBooking)
+        {
+            return new List<Booking>
+            {
+                new()
+                {
+                    TrailerId = selectedTrailer.Id,
+                    TrailerName = selectedTrailer.BrandAndModel,
+                    Email = currentUser.Email,
+                    CustomerName = currentUser.FullName,
+                    BookingDate = startDate,
+                    TimeSlot = SelectedTimeSlot,
+                    TotalPrice = CalculatedTotalPriceFt
+                }
+            };
+        }
+
+        var bookings = new List<Booking>();
+        var encodedTimeSlot = BookingTimeSlotMetadata.CreateMultiDayValue(startDate, endDate);
+        var deliveryFee = DeliverySelected ? CurrentQuote?.FeeFt ?? 0m : 0m;
+
+        for (var day = startDate; day <= endDate; day = day.AddDays(1))
+        {
+            var dayPrice = selectedTrailer.DailyRateFt;
+            if (day == startDate)
+            {
+                dayPrice += deliveryFee;
+            }
+
+            bookings.Add(new Booking
+            {
+                TrailerId = selectedTrailer.Id,
+                TrailerName = selectedTrailer.BrandAndModel,
+                Email = currentUser.Email,
+                CustomerName = currentUser.FullName,
+                BookingDate = day,
+                TimeSlot = encodedTimeSlot,
+                TotalPrice = dayPrice
+            });
+        }
+
+        return bookings;
     }
 
     private void ResetForm()
     {
         SelectedTrailer = null;
         SelectedBookingDate = null;
+        SelectedBookingEndDate = null;
         SelectedTimeSlot = null;
         SelectedLongitude = null;
         SelectedLatitude = null;
@@ -376,6 +488,8 @@ public partial class BookingViewModel : ObservableObject
         OnPropertyChanged(nameof(MapVisibility));
         OnPropertyChanged(nameof(DeliveryDetailsVisibility));
         OnPropertyChanged(nameof(PickupHintVisibility));
+        OnPropertyChanged(nameof(TimeSlotVisibility));
+        OnPropertyChanged(nameof(MultiDaySummaryVisibility));
         OnPropertyChanged(nameof(DeliveryValidationVisibility));
         OnPropertyChanged(nameof(StatusVisibility));
         OnPropertyChanged(nameof(BasePriceText));
@@ -384,6 +498,7 @@ public partial class BookingViewModel : ObservableObject
         OnPropertyChanged(nameof(TotalPriceSummaryText));
         OnPropertyChanged(nameof(DistanceSummaryText));
         OnPropertyChanged(nameof(FeeSummaryText));
+        OnPropertyChanged(nameof(MultiDayBookingSummaryText));
         OnPropertyChanged(nameof(StatusForeground));
     }
 }

@@ -123,6 +123,16 @@ public class DatabaseService
         await _supabase.From<Booking>().Insert(newBooking);
     }
 
+    public async Task AddBookingsAsync(IEnumerable<Booking> newBookings)
+    {
+        await _supabase.InitializeAsync();
+
+        foreach (var booking in newBookings)
+        {
+            await _supabase.From<Booking>().Insert(booking);
+        }
+    }
+
     public async Task<List<Booking>> GetMyBookingsAsync(string email)
     {
         await _supabase.InitializeAsync();

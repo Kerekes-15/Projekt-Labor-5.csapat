@@ -18,7 +18,20 @@
             <TextBlock Text="Kérlek jelentkezz be a folytatáshoz!" FontSize="14" HorizontalAlignment="Center" Margin="0,0,0,10" Opacity="0.7"/>
 
             <TextBox Text="{Binding Username, Mode=TwoWay}" PlaceholderText="Felhasználónév" HorizontalAlignment="Stretch" />
-            <PasswordBox Password="{Binding Password, Mode=TwoWay}" PlaceholderText="Jelszó" HorizontalAlignment="Stretch" />
+
+            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                <PasswordBox x:Name="LoginPasswordBox"
+                             Grid.Column="0"
+                             Password="{Binding Password, Mode=TwoWay}"
+                             PlaceholderText="Jelszó"
+                             PasswordRevealMode="Hidden"
+                             HorizontalAlignment="Stretch" />
+                <Button x:Name="TogglePasswordVisibilityButton"
+                        Grid.Column="1"
+                        Click="TogglePasswordVisibilityButton_Click"
+                        Content="Mutat"
+                        MinWidth="72" />
+            </Grid>
 
             <TextBlock Text="Hibás felhasználónév vagy jelszó!" Foreground="Red" 
                        Visibility="{Binding HasError, Converter={StaticResource BoolToVisibilityConverter}}" 
