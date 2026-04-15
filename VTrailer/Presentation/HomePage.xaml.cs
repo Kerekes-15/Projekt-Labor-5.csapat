@@ -47,6 +47,15 @@ public sealed partial class HomePage : Page
         {
             AuditLogMenu.Visibility = Visibility.Visible;
         }
+
+        if (user == null || (user.Role != "Adminisztrátor"))
+        {
+            TrailerManagementMenu.Visibility = Visibility.Collapsed;
+        }
+        else
+        {
+            TrailerManagementMenu.Visibility = Visibility.Visible;
+        }
     }
 
     private void ThemeToggle_Toggled(object sender, RoutedEventArgs e)
@@ -123,6 +132,10 @@ public sealed partial class HomePage : Page
             case "AllBookingsPage":
                 WelcomeTextPanel.Visibility = Visibility.Collapsed;
                 ContentFrame.Navigate(typeof(AllBookingsPage));
+                break;
+            case "TrailerManagementPage":
+                WelcomeTextPanel.Visibility = Visibility.Collapsed;
+                ContentFrame.Navigate(typeof(TrailerManagementPage));
                 break;
             case "AuditLog":
                 WelcomeTextPanel.Visibility = Visibility.Collapsed;

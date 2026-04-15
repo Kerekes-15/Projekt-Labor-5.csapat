@@ -8,7 +8,7 @@ namespace VTrailer.Models;
 [Table("Bookings")]
 public class Booking : BaseModel
 {
-    [PrimaryKey("id", true)]
+    [PrimaryKey("id", false)]
     public int Id { get; set; }
 
     [Column("TrailerId")]
@@ -17,11 +17,14 @@ public class Booking : BaseModel
     [Column("TrailerName")]
     public string? TrailerName { get; set; }
 
+    [Column("user_id")] 
+    public int? UserId { get; set; }
+
+    [Reference(typeof(User))]
+    public User? User { get; set; }
+
     [Column("Email")]
     public string? Email { get; set; }
-
-    [Column("CustomerName")]
-    public string? CustomerName { get; set; }
 
     [Column("BookingDate")]
     public DateTime BookingDate { get; set; }

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -13,7 +14,6 @@ public class DatabaseService
 
     public DatabaseService()
     {
-        
         var url = "https://nadkndxtehghzcviactm.supabase.co/";
         var key = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5hZGtuZHh0ZWhnaHpjdmlhY3RtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQyMTIyNDcsImV4cCI6MjA4OTc4ODI0N30.aiafjCqQcNUId2OV018kdaezBotw5x_PYd1Lir-NF9Y";
 
@@ -21,25 +21,20 @@ public class DatabaseService
         _supabase = new Supabase.Client(url, key, options);
     }
 
-    //FELHASZNÁLÓK
-
     public async Task<bool> LoginUserAsync(string email, string password)
     {
         try
         {
-            // 1. Titkos Auth belépés
             var session = await _supabase.Auth.SignIn(email, password);
 
             if (session?.User != null)
             {
-                // 2. Beállítjuk az e-mailt alapértelmezetten
                 CurrentUser = new User { Email = email };
 
-                // 3. LETÖLTJÜK A TELJES PROFILT A USERS TÁBLÁBÓL!
                 var userProfile = await GetUserProfileAsync(email);
                 if (userProfile != null)
                 {
-                    CurrentUser = userProfile; // Megkapja a Nevet, Telefont, mindent!
+                    CurrentUser = userProfile;
                 }
 
                 return true;
@@ -53,23 +48,20 @@ public class DatabaseService
         }
     }
 
-    //Regisztráció
     public async Task<bool> RegisterUserAsync(string email, string password, string fullName, string phoneNumber)
     {
         try
         {
- 
             var session = await _supabase.Auth.SignUp(email, password);
 
             if (session?.User != null)
             {
-               
                 var newUserProfile = new Models.User
                 {
-                    Email = email, 
+                    Email = email,
                     FullName = fullName,
                     PhoneNumber = phoneNumber,
-                    Role = "Vendég" 
+                    Role = "Vendég"
                 };
 
                 await _supabase.From<Models.User>().Insert(newUserProfile);
@@ -84,15 +76,12 @@ public class DatabaseService
         }
     }
 
-    //Kijelentkezés
     public async Task LogoutAsync()
     {
-        await _supabase.Auth.SignOut(); 
-        CurrentUser = null;             
+        await _supabase.Auth.SignOut();
+        CurrentUser = null;
     }
 
-
-    //UTÁNFUTÓK
     public async Task<List<Trailer>> GetTrailersAsync()
     {
         await _supabase.InitializeAsync();
@@ -115,8 +104,6 @@ public class DatabaseService
             .Update();
     }
 
-
-    //FOGLALÁSOK
     public async Task AddBookingAsync(Booking newBooking)
     {
         await _supabase.InitializeAsync();
@@ -133,23 +120,32 @@ public class DatabaseService
         }
     }
 
-    public async Task<List<Booking>> GetMyBookingsAsync(string email)
+    public async Task<List<Booking>> GetMyBookingsAsync(int userId)
     {
         await _supabase.InitializeAsync();
         var response = await _supabase.From<Booking>()
-                                      
-                                      .Where(b => b.Email == email)
-                                      .Get();
+            .Where(b => b.UserId == userId)
+            .Get();
+
         return response.Models;
     }
 
+    public async Task<List<Booking>> GetAllBookingsAsync()
+    {
+        await _supabase.InitializeAsync();
+        var response = await _supabase.From<Booking>()
+            .Order("BookingDate", Supabase.Postgrest.Constants.Ordering.Descending)
+            .Get();
+
+        return response.Models;
+    }
 
     public async Task<User?> GetUserProfileAsync(string email)
     {
         try
         {
             var response = await _supabase.From<User>()
-                                          .Where(u => u.Email == email) 
+                                          .Where(u => u.Email == email)
                                           .Get();
 
             return response.Models.FirstOrDefault();
@@ -159,7 +155,6 @@ public class DatabaseService
             return null;
         }
     }
-
 
     public async Task<bool> SaveUserProfileAsync(User userProfile)
     {
@@ -174,15 +169,13 @@ public class DatabaseService
             return false;
         }
     }
-    // Jelszó módosítása 
+
     public async Task<bool> ChangePasswordAsync(string newPassword)
     {
         try
         {
             var attrs = new Supabase.Gotrue.UserAttributes { Password = newPassword };
-
             var response = await _supabase.Auth.Update(attrs);
-
             return response != null;
         }
         catch (Exception ex)
@@ -192,7 +185,6 @@ public class DatabaseService
         }
     }
 
-    //AUDIT LOG
     public async Task LogActionAsync(string action, string tableName, string details)
     {
         try
@@ -215,7 +207,6 @@ public class DatabaseService
         return response.Models;
     }
 
-    //FOGLALÁS TÖRLÉSE 
     public async Task<bool> DeleteBookingAsync(int bookingId, string trailerName)
     {
         try
@@ -253,23 +244,6 @@ public class DatabaseService
         }
     }
 
-    public async Task<List<Booking>> GetAllBookingsAsync()
-    {
-        try
-        {
-           
-            var response = await _supabase.From<Booking>()
-                .Order("BookingDate", Supabase.Postgrest.Constants.Ordering.Descending)
-                .Get();
-
-            return response.Models;
-        }
-        catch (Exception ex)
-        {
-            System.Diagnostics.Debug.WriteLine($"Hiba az összes foglalás lekérésekor: {ex.Message}");
-            return new List<Booking>(); 
-        }
-    }
     public async Task<bool> ReturnTrailerAsync(Booking booking)
     {
         try
@@ -280,12 +254,13 @@ public class DatabaseService
                 .Update();
 
             await _supabase.From<Booking>()
-                .Where(b => b.TrailerId == booking.TrailerId)
-                .Where(b => b.TimeSlot == booking.TimeSlot)
-                .Where(b => b.CustomerName == booking.CustomerName)
+                .Where(b => b.Id == booking.Id)
                 .Delete();
 
-            await LogActionAsync("RETURN", "Booking", $"Utánfutó visszavéve. Típus: {booking.TrailerName}, Ügyfél: {booking.CustomerName}");
+            string userName = booking.User?.FullName ?? "Ismeretlen";
+            string trailerName = booking.TrailerName ?? "Ismeretlen utánfutó";
+
+            await LogActionAsync("RETURN", "Booking", $"Utánfutó visszavéve. Típus: {trailerName}, Ügyfél: {userName}");
 
             return true;
         }
@@ -295,5 +270,4 @@ public class DatabaseService
             return false;
         }
     }
-
-}
+}   

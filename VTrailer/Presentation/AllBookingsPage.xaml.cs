@@ -60,11 +60,9 @@ public sealed partial class AllBookingsPage : Page
 
         foreach (var booking in bookings.OrderByDescending(b => b.BookingDate))
         {
-          
             if (BookingTimeSlotMetadata.TryParseMultiDay(booking.TimeSlot, out var startDate, out var endDate))
             {
-           
-                var key = $"{booking.CustomerName}:{booking.TrailerId}:{startDate:yyyyMMdd}:{endDate:yyyyMMdd}";
+                var key = $"{booking.UserId}:{booking.TrailerId}:{startDate:yyyyMMdd}:{endDate:yyyyMMdd}";
                 if (!multiDayGroups.TryGetValue(key, out var group))
                 {
                     group = new List<Booking>();
@@ -74,10 +72,8 @@ public sealed partial class AllBookingsPage : Page
                 continue;
             }
 
-
             items.Add(new BookingDisplayItem(booking));
         }
-
 
         foreach (var group in multiDayGroups.Values)
         {
@@ -105,7 +101,8 @@ public sealed partial class AllBookingsPage : Page
             ContentDialog returnDialog = new ContentDialog
             {
                 Title = "Visszavétel megerősítése",
-                Content = $"Megerősíted, hogy a(z) {selectedBooking.CustomerName} által lefoglalt {selectedBooking.TrailerName} visszakerült a telephelyre?",
+                
+                Content = $"Megerősíted, hogy a(z) {selectedItem.CustomerName} által lefoglalt {selectedItem.TrailerName} visszakerült a telephelyre?",
                 PrimaryButtonText = "Igen, visszavéve",
                 CloseButtonText = "Mégse",
                 XamlRoot = this.XamlRoot
@@ -125,8 +122,11 @@ public sealed partial class AllBookingsPage : Page
     public class BookingDisplayItem
     {
         public Booking OriginalBooking { get; }
-        public string TrailerName => OriginalBooking.TrailerName ?? "";
-        public string CustomerName => OriginalBooking.CustomerName ?? "";
+
+        public string TrailerName => OriginalBooking.TrailerName ?? "Ismeretlen utánfutó";
+
+        public string CustomerName => OriginalBooking.User?.FullName ?? "Ismeretlen felhasználó";
+
         public string DisplayDate { get; }
         public string DisplayTimeSlot { get; }
         public string DisplayPrice { get; }

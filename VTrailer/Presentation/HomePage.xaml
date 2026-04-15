@@ -31,7 +31,7 @@
                     <FontIcon Glyph="&#xE81C;"/>
                 </NavigationViewItem.Icon>
             </NavigationViewItem>
-
+            <NavigationViewItem x:Name="TrailerManagementMenu" Content="Utánfutók kezelése" Icon="Edit" Tag="TrailerManagementPage" />
             <NavigationViewItem x:Name="AllBookingsMenu" Content="Összes foglalás" Tag="AllBookingsPage" Icon="Library" />
             <NavigationViewItem x:Name="AuditLogMenu" Content="Rendszer Napló" Tag="AuditLog" Icon="Document" />
         </NavigationView.MenuItems>
