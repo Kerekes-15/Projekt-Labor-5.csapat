@@ -191,6 +191,7 @@ public partial class BookingViewModel : ObservableObject
 
         ClearStatus();
         UpdateDerivedState();
+        _ = LoadAvailableTrailersAsync();
     }
 
     partial void OnSelectedBookingEndDateChanged(DateTimeOffset? value)
@@ -203,6 +204,7 @@ public partial class BookingViewModel : ObservableObject
 
         ClearStatus();
         UpdateDerivedState();
+        _ = LoadAvailableTrailersAsync();
     }
 
     partial void OnSelectedTimeSlotChanged(string? value)
@@ -277,7 +279,7 @@ public partial class BookingViewModel : ObservableObject
             UpdateDerivedState();
 
             await _databaseService.AddBookingAsync(bookingsToSave.First());
-            await _databaseService.UpdateTrailerStatusAsync(SelectedTrailer.Id, "Kölcsönözve");
+            //await _databaseService.UpdateTrailerStatusAsync(SelectedTrailer.Id, "Kölcsönözve");
 
             var successPrefix = IsMultiDayBooking
                 ? $"Sikeres {BookingDayCount} napos foglalás. Fizetendő végösszeg: {TotalPriceText}."
@@ -309,11 +311,41 @@ public partial class BookingViewModel : ObservableObject
             IsLoadingTrailers = true;
             UpdateDerivedState();
 
+            int? previouslySelectedId = SelectedTrailer?.Id;
+
             var allTrailers = await _databaseService.GetTrailersAsync();
-            var available = allTrailers
+            var allBookings = await _databaseService.GetAllBookingsAsync();
+
+            var activeTrailers = allTrailers
                 .Where(t => string.Equals(t.Status, "Elérhető", StringComparison.OrdinalIgnoreCase))
-                .OrderBy(t => t.BrandAndModel)
                 .ToList();
+
+            if (SelectedBookingDate.HasValue)
+            {
+                var reqStart = SelectedBookingDate.Value.Date;
+                var reqEnd = SelectedBookingEndDate?.Date ?? reqStart;
+
+                var overlappingTrailerIds = allBookings.Where(b =>
+                {
+                    DateTime existingStart = b.BookingDate.Date;
+                    DateTime existingEnd = b.BookingDate.Date;
+
+                    if (BookingTimeSlotMetadata.TryParseMultiDay(b.TimeSlot, out var mStart, out var mEnd))
+                    {
+                        existingStart = mStart.Date;
+                        existingEnd = mEnd.Date;
+                    }
+
+                    return existingStart <= reqEnd && existingEnd >= reqStart;
+                })
+                .Select(b => b.TrailerId)
+                .Distinct()
+                .ToList();
+
+                activeTrailers = activeTrailers.Where(t => !overlappingTrailerIds.Contains(t.Id)).ToList();
+            }
+
+            var available = activeTrailers.OrderBy(t => t.BrandAndModel).ToList();
 
             AvailableTrailers.Clear();
             foreach (var trailer in available)
@@ -321,10 +353,11 @@ public partial class BookingViewModel : ObservableObject
                 AvailableTrailers.Add(trailer);
             }
 
-            if (SelectedTrailer is not null && AvailableTrailers.All(t => t.Id != SelectedTrailer.Id))
+            if (previouslySelectedId.HasValue)
             {
-                SelectedTrailer = null;
+                SelectedTrailer = AvailableTrailers.FirstOrDefault(t => t.Id == previouslySelectedId.Value);
             }
+
         }
         catch (Exception ex)
         {

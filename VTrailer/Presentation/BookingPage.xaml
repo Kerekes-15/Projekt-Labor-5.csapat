@@ -71,12 +71,12 @@
                         <StackPanel Spacing="10">
                             <TextBlock Text="Átvételi mód" FontSize="18" FontWeight="SemiBold" />
                             <RadioButton x:Name="PickupOption"
-                                         Content="Pickup"
+                                         Content="Helyben átvétel"
                                          GroupName="TransportMode"
                                          IsChecked="True"
                                          Checked="PickupOption_Checked" />
                             <RadioButton x:Name="DeliveryOption"
-                                         Content="Delivery"
+                                         Content="Házhoz szállítás"
                                          GroupName="TransportMode"
                                          Checked="DeliveryOption_Checked" />
                             <TextBlock Text="Pickup esetén nincs extra díj, és nem szükséges térképes helyválasztás."

@@ -89,7 +89,7 @@
                                 <StackPanel VerticalAlignment="Center">
                                     <TextBlock Text="Napi díj" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
                                     <TextBlock FontSize="20" FontWeight="Bold" Foreground="#0078D7">
-                                        <Run Text="{Binding DailyRateFt}" />
+                                        <Run Text="{Binding DailyRateFormatted}" />
                                         <Run Text=" Ft" />
                                     </TextBlock>
                                 </StackPanel>

@@ -41,4 +41,7 @@ public class Trailer : BaseModel
 
     [Column("ImageUrl")]
     public string? ImageUrl { get; set; }
+
+    public string DailyRateFormatted => $"{DailyRateFt:N0}";
+    public string DepositFormatted => $"{DepositFt:N0}";
 }

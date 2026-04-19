@@ -1,3 +1,4 @@
+using System.IO;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -102,6 +103,19 @@ public class DatabaseService
             .Where(t => t.Id == trailerId)
             .Set(t => t.Status!, newStatus)
             .Update();
+    }
+
+    public async Task UpdateTrailerAsync(Trailer updatedTrailer)
+    {
+        try
+        {
+            await _supabase.InitializeAsync();
+            await _supabase.From<Trailer>().Update(updatedTrailer);
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Hiba az utánfutó frissítésekor: {ex.Message}");
+        }
     }
 
     public async Task AddBookingAsync(Booking newBooking)
@@ -268,6 +282,43 @@ public class DatabaseService
         {
             System.Diagnostics.Debug.WriteLine(ex.Message);
             return false;
+        }
+    }
+    public async Task<string> UploadTrailerImageAsync(Windows.Storage.StorageFile file)
+    {
+        try
+        {
+            await _supabase.InitializeAsync();
+
+            using var stream = await file.OpenStreamForReadAsync();
+            using var memoryStream = new MemoryStream();
+            await stream.CopyToAsync(memoryStream);
+            var fileBytes = memoryStream.ToArray();
+
+            string uniqueFileName = $"{Guid.NewGuid()}_{file.Name}";
+
+            await _supabase.Storage.From("images").Upload(fileBytes, uniqueFileName);
+
+            return _supabase.Storage.From("images").GetPublicUrl(uniqueFileName);
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Hiba a képfeltöltéskor: {ex.Message}");
+            return string.Empty;
+        }
+    }
+    public async Task DeleteTrailerAsync(int id)
+    {
+        try
+        {
+            await _supabase.InitializeAsync();
+            await _supabase.From<Trailer>()
+                           .Where(t => t.Id == id)
+                           .Delete();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Hiba az utánfutó törlésekor: {ex.Message}");
         }
     }
 }   
