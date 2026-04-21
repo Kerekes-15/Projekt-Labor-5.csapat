@@ -17,12 +17,6 @@ public class Booking : BaseModel
     [Column("TrailerName")]
     public string? TrailerName { get; set; }
 
-    [Column("user_id")] 
-    public int? UserId { get; set; }
-
-    [Reference(typeof(User))]
-    public User? User { get; set; }
-
     [Column("Email")]
     public string? Email { get; set; }
 
@@ -34,7 +28,14 @@ public class Booking : BaseModel
 
     [Column("TotalPrice")]
     public decimal TotalPrice { get; set; }
-  
+
+    [Column("CustomerName")]
+    public string? CustomerName { get; set; }
+
+    [Column("CustomerPhone")]
+    public string? CustomerPhone { get; set; }
+
+
     [JsonIgnore]
     public string DisplayDate =>
         BookingTimeSlotMetadata.TryParseMultiDay(TimeSlot, out var startDate, out var endDate)

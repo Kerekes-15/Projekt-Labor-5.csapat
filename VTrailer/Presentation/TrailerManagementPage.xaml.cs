@@ -26,7 +26,11 @@ public sealed partial class TrailerManagementPage : Page
         TrailersListView.ItemsSource = null;
 
         Trailers.Clear();
-        foreach (var trailer in trailersList)
+
+        // ABC sorrendbe rendezés
+        var sortedTrailers = trailersList.OrderBy(t => t.BrandAndModel).ToList();
+
+        foreach (var trailer in sortedTrailers)
         {
             Trailers.Add(trailer);
         }
@@ -52,7 +56,7 @@ public sealed partial class TrailerManagementPage : Page
         bool isEdit = existingTrailer != null;
         Windows.Storage.StorageFile? selectedFile = null;
 
-        // --- UX SEGÉDFÜGGVÉNYEK ---
+        //UX segédfüggvények
         StackPanel CreateField(string label, Control input)
         {
             input.Height = 36;
@@ -75,7 +79,7 @@ public sealed partial class TrailerManagementPage : Page
             return grid;
         }
 
-        // --- BEVITELI MEZŐK ---
+        //Beviteli mezők
         var brandBox = new TextBox { PlaceholderText = "pl. Eduard 3116", Text = existingTrailer?.BrandAndModel ?? "" };
         var plateBox = new TextBox { PlaceholderText = "pl. KAA-522", Text = existingTrailer?.LicensePlate ?? "" };
         var categoryBox = new TextBox { PlaceholderText = "pl. Nyitott", Text = existingTrailer?.Category ?? "" };
@@ -87,7 +91,7 @@ public sealed partial class TrailerManagementPage : Page
         var widthBox = new TextBox { PlaceholderText = "pl. 140", Text = existingTrailer?.InnerWidthCm.ToString("0") ?? "" };
         var statusCombo = new ComboBox { ItemsSource = new[] { "Elérhető", "Szervizben" }, SelectedItem = existingTrailer?.Status ?? "Elérhető" };
 
-        // --- KÉP ELŐNÉZET ÉS GOMB (A legaljára) ---
+        //Előnézet
         string currentImagePath = existingTrailer?.ImageUrl ?? "";
         var imagePreview = new Image
         {
@@ -123,7 +127,7 @@ public sealed partial class TrailerManagementPage : Page
             }
         };
 
-        // --- FORM ÖSSZEÁLLÍTÁSA ---
+        //Form összeállítása
         var formPanel = new StackPanel { Spacing = 12, Width = 450 }; // Kényelmes, egysoros szélesség
         formPanel.Children.Add(CreateField("Márka és Típus *", brandBox));
         formPanel.Children.Add(CreateRow(CreateField("Rendszám", plateBox), CreateField("Kategória", categoryBox)));
@@ -139,12 +143,12 @@ public sealed partial class TrailerManagementPage : Page
         imageSection.Children.Add(browseButton);
         formPanel.Children.Add(imageSection);
 
-        // GÖRGETŐ!
+        //Scroll
         var scrollViewer = new ScrollViewer
         {
             Content = formPanel,
             VerticalScrollBarVisibility = ScrollBarVisibility.Auto,
-            MaxHeight = 650, // Nem lóg ki a képernyőről
+            MaxHeight = 650, 
             Padding = new Thickness(0, 0, 16, 16)
         };
 
@@ -157,39 +161,54 @@ public sealed partial class TrailerManagementPage : Page
             XamlRoot = this.XamlRoot
         };
 
-        // --- MENTÉS ---
+        //Mentés
         if (await dialog.ShowAsync() == ContentDialogResult.Primary)
         {
-            var trailer = isEdit ? existingTrailer! : new Trailer();
-
-            if (selectedFile != null)
+            try
             {
-                string publicUrl = await _dbService.UploadTrailerImageAsync(selectedFile);
-                if (!string.IsNullOrWhiteSpace(publicUrl))
+                var trailer = isEdit ? existingTrailer! : new Trailer();
+
+                //Adatok betöltése
+                trailer.BrandAndModel = brandBox.Text;
+                trailer.LicensePlate = plateBox.Text;
+                trailer.Category = categoryBox.Text;
+                trailer.Status = statusCombo.SelectedItem?.ToString() ?? "Elérhető";
+
+                decimal.TryParse(dailyRateBox.Text, out decimal rate); trailer.DailyRateFt = rate;
+                decimal.TryParse(depositBox.Text, out decimal dep); trailer.DepositFt = dep;
+                int.TryParse(payloadBox.Text, out int pl); trailer.PayloadCapacityKg = pl;
+                int.TryParse(totalWeightBox.Text, out int tw); trailer.TotalWeightKg = tw;
+                double.TryParse(lengthBox.Text, out double l); trailer.InnerLengthCm = l;
+                double.TryParse(widthBox.Text, out double w); trailer.InnerWidthCm = w;
+
+                //Kép feltöltése
+                if (selectedFile != null)
                 {
-                    trailer.ImageUrl = publicUrl + "?t=" + DateTime.Now.Ticks.ToString();
+                    string publicUrl = await _dbService.UploadTrailerImageAsync(selectedFile);
+                    if (!string.IsNullOrWhiteSpace(publicUrl))
+                    {
+                        trailer.ImageUrl = publicUrl; 
+                    }
                 }
+                //Adatbázisnak küldés
+                if (isEdit) await _dbService.UpdateTrailerAsync(trailer);
+                else await _dbService.AddTrailerAsync(trailer);
+
+                //Lista frissítés
+                LoadDataAsync();
             }
-            else
+            catch (Exception ex)
             {
-                trailer.ImageUrl = currentImagePath;
+                //Védőháló: Ha bármi összeomlik, ezt az ablakot fogod látni!
+                var errorDialog = new ContentDialog
+                {
+                    Title = "Hiba történt a mentés során!",
+                    Content = $"Részletek:\n{ex.Message}",
+                    CloseButtonText = "Rendben",
+                    XamlRoot = this.XamlRoot
+                };
+                await errorDialog.ShowAsync();
             }
-            trailer.BrandAndModel = brandBox.Text;
-            trailer.LicensePlate = plateBox.Text;
-            trailer.Category = categoryBox.Text;
-            trailer.Status = statusCombo.SelectedItem?.ToString() ?? "Elérhető";
-
-            decimal.TryParse(dailyRateBox.Text, out decimal rate); trailer.DailyRateFt = rate;
-            decimal.TryParse(depositBox.Text, out decimal dep); trailer.DepositFt = dep;
-            int.TryParse(payloadBox.Text, out int pl); trailer.PayloadCapacityKg = pl;
-            int.TryParse(totalWeightBox.Text, out int tw); trailer.TotalWeightKg = tw;
-            double.TryParse(lengthBox.Text, out double l); trailer.InnerLengthCm = l;
-            double.TryParse(widthBox.Text, out double w); trailer.InnerWidthCm = w;
-
-            if (isEdit) await _dbService.UpdateTrailerAsync(trailer);
-            else await _dbService.AddTrailerAsync(trailer);
-
-            LoadDataAsync();
         }
     }
     private async void DeleteButton_Click(object sender, RoutedEventArgs e)

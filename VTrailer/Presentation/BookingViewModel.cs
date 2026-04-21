@@ -438,7 +438,6 @@ public partial class BookingViewModel : ObservableObject
             TrailerId = selectedTrailer.Id,
             TrailerName = selectedTrailer.BrandAndModel,
             Email = currentUser.Email,
-            UserId = currentUser.Id,
             BookingDate = startDate,
             TimeSlot = IsMultiDayBooking
                 ? BookingTimeSlotMetadata.CreateMultiDayValue(startDate, endDate)

@@ -1,5 +1,6 @@
 using Supabase.Postgrest.Attributes; 
-using Supabase.Postgrest.Models;     
+using Supabase.Postgrest.Models;
+using Newtonsoft.Json;
 
 namespace VTrailer.Models;
 
@@ -42,6 +43,9 @@ public class Trailer : BaseModel
     [Column("ImageUrl")]
     public string? ImageUrl { get; set; }
 
+    [JsonIgnore]
     public string DailyRateFormatted => $"{DailyRateFt:N0}";
+
+    [JsonIgnore]
     public string DepositFormatted => $"{DepositFt:N0}";
 }

@@ -40,7 +40,10 @@ public sealed partial class MyBookingsPage : Page
 
         try
         {
-            var myBookings = await _dbService.GetMyBookingsAsync(DatabaseService.CurrentUser!.Id);
+            var userEmail = DatabaseService.CurrentUser?.Email;
+            if (string.IsNullOrEmpty(userEmail)) return; 
+
+            var myBookings = await _dbService.GetMyBookingsAsync(userEmail);
             var bookingItems = BuildBookingItems(myBookings);
 
             if (bookingItems.Count == 0)

@@ -136,7 +136,6 @@ public partial class App : Application
             new ViewMap<LoginPage, LoginViewModel>(),
             new ViewMap<HomePage, HomePageViewModel>(),
             new ViewMap<TrailerPage, TrailerViewModel>(),
-            new DataViewMap<SecondPage, SecondViewModel, Entity>(),
             new ViewMap<ProfilePage, ProfileViewModel>(),
             new ViewMap<RegisterPage, RegisterViewModel>()
         );
@@ -148,7 +147,6 @@ public partial class App : Application
                     new ("Login", View: views.FindByViewModel<LoginViewModel>()),
                     new ("Home Page", View: views.FindByViewModel<HomePageViewModel>(), IsDefault:true),
                     new ("TrailerPage", View: views.FindByViewModel<TrailerViewModel>()),
-                    new ("Second", View: views.FindByViewModel<SecondViewModel>()),
                     new ("Profile", View: views.FindByViewModel<ProfileViewModel>()),
                 ]
             )

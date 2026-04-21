@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using VTrailer.Models;
+using System.Security.Cryptography;
 
 namespace VTrailer.Services;
 
@@ -134,24 +135,38 @@ public class DatabaseService
         }
     }
 
-    public async Task<List<Booking>> GetMyBookingsAsync(int userId)
+    // 1. Saját foglalások lekérése e-mail alapján
+    public async Task<List<Booking>> GetMyBookingsAsync(string userEmail)
     {
         await _supabase.InitializeAsync();
-        var response = await _supabase.From<Booking>()
-            .Where(b => b.UserId == userId)
+        var response = await _supabase
+            .From<Booking>()
+            .Where(b => b.Email == userEmail) 
             .Get();
-
         return response.Models;
     }
 
+    // 2. Összes foglalás (AllBookings) név-szinkronizálása e-mail alapján
     public async Task<List<Booking>> GetAllBookingsAsync()
     {
         await _supabase.InitializeAsync();
-        var response = await _supabase.From<Booking>()
-            .Order("BookingDate", Supabase.Postgrest.Constants.Ordering.Descending)
-            .Get();
 
-        return response.Models;
+        var bookings = (await _supabase.From<Booking>().Get()).Models;
+        var users = (await _supabase.From<User>().Get()).Models;
+
+        foreach (var booking in bookings)
+        {
+            if (!string.IsNullOrWhiteSpace(booking.Email))
+            {
+                // Email alapján párosítjuk a nevet a Users táblából
+                var matchedUser = users.FirstOrDefault(u => u.Email == booking.Email);
+                if (matchedUser != null)
+                {
+                    booking.CustomerName = matchedUser.FullName;
+                }
+            }
+        }
+        return bookings;
     }
 
     public async Task<User?> GetUserProfileAsync(string email)
@@ -271,7 +286,7 @@ public class DatabaseService
                 .Where(b => b.Id == booking.Id)
                 .Delete();
 
-            string userName = booking.User?.FullName ?? "Ismeretlen";
+            string userName = booking.CustomerName ?? "Ismeretlen";
             string trailerName = booking.TrailerName ?? "Ismeretlen utánfutó";
 
             await LogActionAsync("RETURN", "Booking", $"Utánfutó visszavéve. Típus: {trailerName}, Ügyfél: {userName}");
@@ -295,16 +310,17 @@ public class DatabaseService
             await stream.CopyToAsync(memoryStream);
             var fileBytes = memoryStream.ToArray();
 
-            string uniqueFileName = $"{Guid.NewGuid()}_{file.Name}";
+            string extension = Path.GetExtension(file.Name).ToLowerInvariant();
+            string uniqueFileName = $"{Guid.NewGuid()}{extension}";
 
-            await _supabase.Storage.From("images").Upload(fileBytes, uniqueFileName);
+            await _supabase.Storage.From("images").Upload(fileBytes, uniqueFileName, new Supabase.Storage.FileOptions { Upsert = true });
 
             return _supabase.Storage.From("images").GetPublicUrl(uniqueFileName);
         }
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"Hiba a képfeltöltéskor: {ex.Message}");
-            return string.Empty;
+            throw; 
         }
     }
     public async Task DeleteTrailerAsync(int id)
@@ -320,5 +336,22 @@ public class DatabaseService
         {
             System.Diagnostics.Debug.WriteLine($"Hiba az utánfutó törlésekor: {ex.Message}");
         }
+    }
+    public async Task<List<Booking>> GetBookingsForTrailerAsync(int trailerId)
+    {
+        await _supabase.InitializeAsync();
+
+        var response = await _supabase
+            .From<Booking>()
+            .Where(b => b.TrailerId == trailerId)
+            .Get();
+
+        return response.Models;
+    }
+    public async Task<User?> GetUserByEmailAsync(string email)
+    {
+        await _supabase.InitializeAsync();
+        var response = await _supabase.From<User>().Where(u => u.Email == email).Get();
+        return response.Models.FirstOrDefault();
     }
 }   
